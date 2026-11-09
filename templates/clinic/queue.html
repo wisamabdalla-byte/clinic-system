@@ -5,7 +5,7 @@
      data-now-label="{% t 'now_serving' %}" data-wait-label="{% t 'waiting' %}" data-none-label="{% t 'no_waiting' %}">
   <header class="queue-head">
     <div class="brand brand-login">
-      <span class="brand-mark">{% icon "tooth" 26 %}</span>
+      {% include "_brand_mark.html" with size=26 %}
       <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{{ request.branch.name }}</small></div>
     </div>
     <div class="queue-clock num" data-queue-clock></div>

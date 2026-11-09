@@ -1,0 +1,25 @@
+{% extends "print_base.html" %}
+{% load ui %}
+{% block title %}{% t "ent_rx" %}{% endblock %}
+{% block back %}{% url 'clinical_patient' object.patient_id %}?tab=rx{% endblock %}
+{% block sheet %}
+<div class="sheet-title">
+  <h1>{% t "ent_rx" %}</h1>
+  <div class="num">{{ object.date|date:"Y-m-d" }}</div>
+</div>
+<ul class="kv sheet-kv">
+  <li><span>{% t "patient_name" %}</span><strong>{{ object.patient.full_name }}</strong></li>
+  <li><span>{% t "file_no" %}</span><code>{{ object.patient.file_no }}</code></li>
+  {% if object.patient.age is not None %}<li><span>{% t "age" %}</span><span class="num">{{ object.patient.age }}</span></li>{% endif %}
+  <li><span>{% t "doctor" %}</span><span>{{ object.doctor }}{% if object.doctor.specialty %} — {{ object.doctor.specialty }}{% endif %}</span></li>
+</ul>
+{% if object.patient.allergies %}<p class="danger-text"><strong>{% t "allergy_alert" %}:</strong> {{ object.patient.allergies }}</p>{% endif %}
+<div class="rx-mark">℞</div>
+<ol class="rx-lines rx-print">
+  {% for i in object.items.all %}
+  <li><strong dir="auto">{{ i.drug }}</strong> {{ i.dose }}<div>{{ i.frequency }}{% if i.duration %} · {{ i.duration }}{% endif %}</div>{% if i.instructions %}<small>{{ i.instructions }}</small>{% endif %}</li>
+  {% endfor %}
+</ol>
+{% if object.notes %}<p class="pre">{{ object.notes }}</p>{% endif %}
+<div class="signature"><span>{% t "doctor_signature" %}</span></div>
+{% endblock %}

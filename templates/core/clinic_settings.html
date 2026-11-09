@@ -1,0 +1,11 @@
+{% extends "crud/form.html" %}
+{% load ui %}
+{% block extra %}
+<section class="form-section">
+  <h2>{% t "preview" %}</h2>
+  <div class="brand brand-preview">
+    {% include "_brand_mark.html" with size=22 %}
+    <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{{ clinic_tagline }}</small></div>
+  </div>
+</section>
+{% endblock %}

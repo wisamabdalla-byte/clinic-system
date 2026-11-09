@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'invoice_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_invoices" %}</a>
+    <h1>{% t "ent_invoice" %} <code>{{ object.number }}</code> <span class="badge {{ object.state_class }}">{{ object.state_label }}</span></h1>
+    <p class="muted"><span class="num">{{ object.date|date:"Y-m-d" }}</span> · {{ object.branch.name }}{% if object.created_by %} · {% t "created_by" %}: {{ object.created_by }}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% url 'invoice_print' object.pk %}" target="_blank">{% icon "printer" 18 %}<span>{% t "print" %}</span></a>
+    {% if can_edit %}<a class="btn btn-ghost" href="{% url 'invoice_edit' object.pk %}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>{% endif %}
+  </div>
+</div>
+
+{% if object.is_cancelled %}<div class="alert alert-error">{% t "inv_cancelled" %}{% if object.cancel_reason %}: {{ object.cancel_reason }}{% endif %}</div>{% endif %}
+
+<div class="stats stats-4">
+  <div class="card stat"><span class="stat-icon">{% icon "receipt" 20 %}</span><span class="stat-value"><span class="num">{{ object.total|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "total" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "check-circle" 20 %}</span><span class="stat-value"><span class="num">{{ object.paid|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "paid" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ object.balance|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "balance" %}</span></div>
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "patient" %}</h2>
+    <ul class="kv">
+      <li><span>{% t "patient_name" %}</span><a href="{% url 'patient_detail' object.patient_id %}">{{ object.patient.full_name }}</a></li>
+      <li><span>{% t "file_no" %}</span><code>{{ object.patient.file_no }}</code></li>
+      <li><span>{% t "phone" %}</span><span class="num">{{ object.patient.phone }}</span></li>
+      <li><span>{% t "doctor" %}</span><span>{{ object.doctor }}</span></li>
+    </ul>
+    {% if object.notes %}<h3>{% t "notes" %}</h3><p class="pre">{{ object.notes }}</p>{% endif %}
+  </section>
+  {% if can_see_share %}
+  <section class="card pad">
+    <h2>{% t "doctor_share_title" %}</h2>
+    <ul class="kv">
+      <li><span>{% t "total" %}</span><span><span class="num">{{ object.total|money }}</span> {{ currency }}</span></li>
+      <li><span>{% t "material_cost" %}</span><span><span class="num">− {{ object.material_cost|money }}</span> {{ currency }}</span></li>
+      <li><span>{% t "net_after_material" %}</span><span><span class="num">{{ net_total|money }}</span> {{ currency }}</span></li>
+      <li><span>{% t "doctor_percent" %}</span><span class="num">{{ object.doctor_percent|money }}%</span></li>
+      <li><strong>{% t "doctor_share_full" %}</strong><strong><span class="num">{{ doctor_total|money }}</span> {{ currency }}</strong></li>
+    </ul>
+    <p class="muted small">{% t "doctor_share_note" %}</p>
+  </section>
+  {% endif %}
+</div>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "invoice_items" %}</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "service" %}</th><th>{% t "tooth" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th>{% if can_see_share %}<th>{% t "material_cost" %}</th>{% endif %}<th>{% t "line_total" %}</th></tr></thead>
+      <tbody>
+        {% for i in items %}
+        <tr>
+          <td class="cell-title" data-label="{% t 'service' %}"><strong>{{ i.label }}</strong>{% if i.description and i.service %}<small>{{ i.service.name }}</small>{% endif %}</td>
+          <td data-label="{% t 'tooth' %}" class="num">{{ i.tooth|default:"—" }}</td>
+          <td data-label="{% t 'quantity' %}" class="num">{{ i.quantity }}</td>
+          <td data-label="{% t 'price' %}" class="cell-money"><span class="num">{{ i.unit_price|money }}</span></td>
+          {% if can_see_share %}<td data-label="{% t 'material_cost' %}" class="cell-money"><span class="num muted">{{ i.material_cost|money }}</span></td>{% endif %}
+          <td data-label="{% t 'line_total' %}" class="cell-money"><span class="num">{{ i.line_total|money }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <dl class="totals totals-in-card">
+    <div><dt>{% t "subtotal" %}</dt><dd><span class="num">{{ object.subtotal|money }}</span> <small>{{ currency }}</small></dd></div>
+    {% if object.discount %}<div><dt>{% t "discount" %}</dt><dd><span class="num">− {{ object.discount|money }}</span> <small>{{ currency }}</small></dd></div>{% endif %}
+    <div class="is-good"><dt>{% t "total" %}</dt><dd><span class="num">{{ object.total|money }}</span> <small>{{ currency }}</small></dd></div>
+  </dl>
+</section>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "payments" %}</h2>
+  {% if payments %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "date" %}</th><th>{% t "amount" %}</th><th>{% t "payment_method" %}</th><th>{% t "reference" %}</th><th>{% t "received_by" %}</th>{% if can_see_share %}<th>{% t "doctor_share" %}</th>{% endif %}<th><span class="sr-only">{% t "actions" %}</span></th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td data-label="{% t 'date' %}" class="num">{{ p.date|date:"Y-m-d" }}</td>
+          <td data-label="{% t 'amount' %}" class="cell-money-good"><span class="num">{{ p.amount|money }}</span> <small class="cur">{{ currency }}</small></td>
+          <td data-label="{% t 'payment_method' %}"><span class="badge">{{ p.method.name }}</span></td>
+          <td data-label="{% t 'reference' %}" class="num">{{ p.reference|default:"—" }}</td>
+          <td data-label="{% t 'received_by' %}" class="cell-muted">{{ p.received_by|default:"—" }}</td>
+          {% if can_see_share %}<td data-label="{% t 'doctor_share' %}" class="cell-money"><span class="num">{% if p.settlement_id %}{{ p.doctor_share|money }}{% else %}{{ p.calc_share|money }}{% endif %}</span>{% if p.settlement_id %} <span class="badge badge-muted">{% t "month_closed" %}</span>{% endif %}</td>{% endif %}
+          <td class="col-actions">
+            {% if can_void and not p.settlement_id %}
+            <form method="post" action="{% url 'payment_void' p.pk %}" data-confirm="{% t 'confirm_void' %}">{% csrf_token %}<button class="btn btn-ghost btn-sm danger-text" title="{% t 'void_payment' %}">{% icon "trash" 16 %}</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty empty-sm"><span class="muted">{% t "no_payments" %}</span></div>
+  {% endif %}
+
+  {% if can_pay %}
+  <form method="post" action="{% url 'invoice_pay' object.pk %}" class="pad pay-form" novalidate>
+    {% csrf_token %}
+    <h3>{% t "add_payment" %}</h3>
+    <div class="form-grid">{% for field in payform %}{% include "crud/_field.html" %}{% endfor %}</div>
+    <div class="form-actions"><button class="btn btn-primary">{% icon "plus" 18 %}<span>{% t "add_payment" %}</span></button></div>
+  </form>
+  {% endif %}
+</section>
+
+{% if can_cancel %}
+<details class="card pad danger-zone">
+  <summary>{% t "cancel_invoice" %}</summary>
+  <form method="post" action="{% url 'invoice_cancel' object.pk %}" class="inline-form">
+    {% csrf_token %}
+    <input class="input" name="reason" placeholder="{% t 'cancel_reason' %}">
+    <button class="btn btn-ghost danger-text">{% t "cancel_invoice" %}</button>
+  </form>
+</details>
+{% endif %}
+{% endblock %}

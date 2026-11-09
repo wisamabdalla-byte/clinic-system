@@ -1,0 +1,8 @@
+{% load ui %}<tr class="formset-row">
+  <td data-label="{% t 'drug' %}">{% for h in f.hidden_fields %}{{ h }}{% endfor %}{{ f.drug }}{% for e in f.drug.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'dose' %}">{{ f.dose }}</td>
+  <td data-label="{% t 'frequency' %}">{{ f.frequency }}</td>
+  <td data-label="{% t 'duration' %}">{{ f.duration }}</td>
+  <td data-label="{% t 'instructions' %}">{{ f.instructions }}</td>
+  <td>{% if f.instance.pk %}<label class="check-label remove-row">{{ f.DELETE }}<span>{% t "remove" %}</span></label>{% else %}<button type="button" class="btn btn-ghost btn-sm" data-remove-row aria-label="{% t 'remove' %}">{% icon "x" 16 %}</button>{% endif %}</td>
+</tr>

@@ -1,0 +1,4 @@
+<button type="button" class="tooth {{ tooth.css }}" data-tooth="{{ tooth.n }}" data-condition="{{ tooth.condition }}" data-note="{{ tooth.note }}" title="{{ tooth.n }} · {{ tooth.label }}{% if tooth.note %} · {{ tooth.note }}{% endif %}"{% if not can_edit %} disabled{% endif %}>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5c-1.5-1.3-3.2-2-5-1.6C4.6 4.4 3.5 6.6 4 9.5c.5 3 1.6 4.4 2.2 7.5.4 2 .9 3.5 2 3.5 1.6 0 1.4-5 3.8-5s2.2 5 3.8 5c1.1 0 1.6-1.5 2-3.5.6-3.1 1.7-4.5 2.2-7.5.5-2.9-.6-5.1-3-5.6-1.8-.4-3.5.3-5 1.6z"/></svg>
+  <span class="num">{{ tooth.n }}</span>
+</button>

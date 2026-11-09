@@ -8,6 +8,8 @@
     <p class="muted"><code>{{ object.file_no }}</code> · {{ object.get_gender_display }}{% if object.age is not None %} · <span class="num">{{ object.age }}</span> {% t "years" %}{% endif %}</p>
   </div>
   <div class="page-actions">
+    {% if can_clinical %}<a class="btn btn-ghost" href="{% url 'clinical_patient' object.pk %}">{% icon "clipboard" 18 %}<span>{% t "clinical_file" %}</span></a>{% endif %}
+    {% if can_invoice %}<a class="btn btn-ghost" href="{% url 'invoice_create' %}?patient={{ object.pk }}">{% icon "receipt" 18 %}<span>{% t "new_invoice" %}</span></a>{% endif %}
     {% if can_edit %}<a class="btn btn-ghost" href="{% url 'patient_edit' object.pk %}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>{% endif %}
     {% if can_book %}<a class="btn btn-primary" href="{% url 'patient_book' object.pk %}">{% icon "calendar" 18 %}<span>{% t "book" %}</span></a>{% endif %}
   </div>
@@ -43,6 +45,34 @@
     {% if object.notes %}<h3>{% t "notes" %}</h3><p class="pre">{{ object.notes }}</p>{% endif %}
   </section>
 </div>
+
+{% if invoices is not None %}
+<section class="card">
+  <div class="section-head pad pad-b0">
+    <h2>{% t "nav_invoices" %}</h2>
+    {% if patient_balance %}<span class="badge badge-bad">{% t "balance" %}: <span class="num">{{ patient_balance|money }}</span> {{ currency }}</span>{% endif %}
+  </div>
+  {% if invoices %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "invoice_no" %}</th><th>{% t "doctor" %}</th><th>{% t "total" %}</th><th>{% t "paid" %}</th><th>{% t "balance" %}</th><th>{% t "status" %}</th></tr></thead>
+      <tbody>
+        {% for i in invoices %}
+        <tr>
+          <td class="cell-title"><a href="{% url 'invoice_detail' i.pk %}"><code>{{ i.number }}</code></a><small class="num">{{ i.date|date:"Y-m-d" }}</small></td>
+          <td data-label="{% t 'doctor' %}">{{ i.doctor }}</td>
+          <td data-label="{% t 'total' %}" class="cell-money"><span class="num">{{ i.total|money }}</span></td>
+          <td data-label="{% t 'paid' %}" class="cell-money-good"><span class="num">{{ i.paid|money }}</span></td>
+          <td data-label="{% t 'balance' %}" class="cell-money"><span class="num">{{ i.balance|money }}</span></td>
+          <td data-label="{% t 'status' %}"><span class="badge {{ i.state_class }}">{{ i.state_label }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty empty-sm"><span class="muted">{% t "no_invoices" %}</span></div>{% endif %}
+</section>
+{% endif %}
 
 {% if can_see_appts %}
 <section class="card">

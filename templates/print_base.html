@@ -1,0 +1,33 @@
+{% load static ui %}<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · {{ clinic_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=8">
+  {% if clinic.primary_color %}<style>:root { --primary: {{ clinic.primary_color }}; }</style>{% endif %}
+</head>
+<body class="print-body">
+  <div class="print-tools no-print">
+    <button class="btn btn-primary" onclick="window.print()">{% icon "printer" 18 %}<span>{% t "print" %}</span></button>
+    <a class="btn btn-ghost" href="{% block back %}{% endblock %}">{% t "back" %}</a>
+  </div>
+  <article class="sheet">
+    <header class="sheet-head">
+      <div class="brand">
+        {% include "_brand_mark.html" with size=26 %}
+        <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{{ clinic_tagline }}</small></div>
+      </div>
+      <div class="sheet-contact">
+        {% if clinic.phone %}<div class="num">{{ clinic.phone }}</div>{% endif %}
+        {% if clinic.address %}<div>{{ clinic.address }}</div>{% endif %}
+      </div>
+    </header>
+    {% block sheet %}{% endblock %}
+    {% if clinic.invoice_footer %}<footer class="sheet-foot pre">{{ clinic.invoice_footer }}</footer>{% endif %}
+  </article>
+</body>
+</html>

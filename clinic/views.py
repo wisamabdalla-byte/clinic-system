@@ -96,8 +96,11 @@ class PatientFormMixin(CrudFormMixin):
     entity_key, list_url = "ent_patient", "patient_list"
 
     def get_success_url(self):
-        if self.request.POST.get("then") == "book":
+        then = self.request.POST.get("then")
+        if then == "book":
             return f"{reverse('appointment_create')}?patient={self.object.pk}"
+        if then == "invoice":
+            return f"{reverse('invoice_create')}?patient={self.object.pk}"
         return reverse("patient_detail", args=[self.object.pk])
 
     def get_context_data(self, **kwargs):
@@ -110,7 +113,8 @@ class PatientFormMixin(CrudFormMixin):
             ("patient_medical", ["allergies", "chronic_conditions", "notes"]),
         ]
         ctx["sections"] = [{"title": tr(t), "fields": [form[f] for f in names]} for t, names in groups]
-        ctx["then_book"] = self.request.GET.get("then") == "book"
+        then = self.request.GET.get("then", "")
+        ctx["then"] = then if then in ("book", "invoice") else ""
         return ctx
 
 
@@ -153,7 +157,15 @@ class PatientDetail(PermissionMixin, DetailView):
             can_book=has_perm(user, "appointments", "edit"),
             can_see_appts=has_perm(user, "appointments", "view"),
             visits=sum(1 for a in appts if a.status == Status.COMPLETED),
+            can_clinical=has_perm(user, "clinical", "view"),
+            can_invoice=has_perm(user, "invoices", "edit"),
         )
+        if has_perm(user, "invoices", "view"):
+            from finance.views import decorate_invoice
+
+            invoices = [decorate_invoice(i) for i in self.object.invoices.select_related("doctor")]
+            ctx["invoices"] = invoices
+            ctx["patient_balance"] = sum((i.balance for i in invoices if not i.is_cancelled), 0)
         return ctx
 
 
@@ -178,7 +190,7 @@ class PatientSearch(PermissionMixin, View):
         )[:10]
         return JsonResponse({"results": [
             {"id": p.pk, "name": p.full_name, "phone": p.phone, "file_no": p.file_no,
-             "allergies": p.allergies[:80]} for p in qs
+             "allergies": p.allergies[:80], "price_list": p.price_list_id or ""} for p in qs
         ]})
 
 

@@ -7,15 +7,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=6">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=8">
+  {% if clinic.primary_color and clinic.primary_color != "#0f766e" %}<style>:root { --primary: {{ clinic.primary_color }}; --primary-soft: color-mix(in srgb, {{ clinic.primary_color }} 12%, white); --sidebar: color-mix(in srgb, {{ clinic.primary_color }} 30%, #071417); }</style>{% endif %}
+  {% if clinic.logo %}<link rel="icon" href="{{ clinic.logo }}">{% endif %}
 </head>
 <body>
 {% block body %}
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <span class="brand-mark">{% icon "tooth" 22 %}</span>
-      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{% t "app_tagline" %}</small></div>
+      {% include "_brand_mark.html" with size=22 %}
+      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{{ clinic_tagline }}</small></div>
     </div>
     <nav class="nav">
       {% for item in nav %}
@@ -76,8 +78,8 @@
   </div>
 </div>
 {% endblock %}
-<script src="{% static 'js/app.js' %}?v=2"></script>
-<script src="{% static 'js/clinic.js' %}?v=2"></script>
+<script src="{% static 'js/app.js' %}?v=3"></script>
+<script src="{% static 'js/clinic.js' %}?v=3"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

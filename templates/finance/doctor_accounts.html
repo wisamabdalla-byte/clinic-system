@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "doctor_accounts_sub" %}</p>
+  </div>
+  <div class="page-actions">
+    {% if user|can:"payouts.edit" %}<a class="btn btn-ghost" href="{% url 'payout_create' %}">{% icon "send" 18 %}<span>{% t "add_payout" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="toolbar">{% include "finance/_month_nav.html" %}</div>
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr>
+        <th>{% t "doctor" %}</th><th>{% t "collected" %}</th><th>{% t "material_cost" %}</th><th>{% t "net_after_material" %}</th>
+        <th>{% t "doctor_percent" %}</th><th>{% t "doctor_share" %}</th><th>{% t "month_status" %}</th><th>{% t "balance_owed" %}</th><th><span class="sr-only">{% t "actions" %}</span></th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr{% if not r.doctor.is_active %} class="is-inactive"{% endif %}>
+          <td class="cell-title"><span class="dot" style="--c: {{ r.doctor.color }}"></span><strong>{{ r.doctor }}</strong><small>{{ r.doctor.specialty }}</small></td>
+          <td data-label="{% t 'collected' %}" class="cell-money"><span class="num">{{ r.fig.collected|money }}</span></td>
+          <td data-label="{% t 'material_cost' %}" class="cell-num"><span class="num muted">{{ r.fig.material|money }}</span></td>
+          <td data-label="{% t 'net_after_material' %}" class="cell-num"><span class="num">{{ r.fig.net|money }}</span></td>
+          <td data-label="{% t 'doctor_percent' %}" class="cell-num"><span class="num">{{ r.doctor.commission_percent|money }}%</span></td>
+          <td data-label="{% t 'doctor_share' %}" class="cell-money-good"><span class="num">{{ r.fig.doctor_share|money }}</span> <small class="cur">{{ currency }}</small></td>
+          <td data-label="{% t 'month_status' %}">{% if r.fig.is_closed %}<span class="badge badge-good">{% t "month_closed" %}</span>{% else %}<span class="badge badge-accent">{% t "month_open" %}</span>{% endif %}</td>
+          <td data-label="{% t 'balance_owed' %}" class="cell-money"><span class="num">{{ r.balance|money }}</span> <small class="cur">{{ currency }}</small></td>
+          <td class="col-actions">
+            <a class="btn btn-ghost btn-sm" href="{% url 'doctor_month' r.doctor.pk %}?month={{ month_value }}">{% if can_close and not r.fig.is_closed %}{% icon "lock" 16 %}<span>{% t "review_close" %}</span>{% else %}{% icon "list" 16 %}<span>{% t "details" %}</span>{% endif %}</a>
+            <a class="btn btn-ghost btn-sm" href="{% url 'doctor_statement' r.doctor.pk %}" title="{% t 'statement' %}" aria-label="{% t 'statement' %}">{% icon "receipt" 16 %}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <th>{% t "total" %}</th>
+          <td class="cell-money"><span class="num">{{ totals.collected|money }}</span></td>
+          <td class="cell-num"><span class="num muted">{{ totals.material|money }}</span></td>
+          <td class="cell-num"><span class="num">{{ totals.net|money }}</span></td>
+          <td></td>
+          <td class="cell-money-good"><span class="num">{{ totals.share|money }}</span> <small class="cur">{{ currency }}</small></td>
+          <td colspan="3"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><strong>{% t "no_doctors" %}</strong><p class="muted">{% t "no_doctors_hint" %}</p></div>
+  {% endif %}
+</div>
+<p class="muted small">{% t "doctor_share_rule" %}</p>
+{% endblock %}

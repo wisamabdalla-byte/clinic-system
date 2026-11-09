@@ -46,6 +46,10 @@
               <button class="btn btn-sm act-{{ act.key }}" title="{{ act.label }}" aria-label="{{ act.label }}">{% icon act.icon 16 %}{% if act.primary %}<span>{{ act.label }}</span>{% endif %}</button>
             </form>
             {% endfor %}
+            {% if a.status == "in_progress" or a.status == "completed" %}
+              {% if user|can:"clinical.edit" %}<a class="btn btn-ghost btn-sm" href="{% url 'note_create' a.patient_id %}?appointment={{ a.pk }}" title="{% t 'write_note' %}" aria-label="{% t 'write_note' %}">{% icon "clipboard" 16 %}</a>{% endif %}
+              {% if user|can:"invoices.edit" %}<a class="btn btn-ghost btn-sm act-invoice" href="{% url 'invoice_create' %}?appointment={{ a.pk }}" title="{% t 'new_invoice' %}">{% icon "receipt" 16 %}<span>{% t "invoice_short" %}</span></a>{% endif %}
+            {% endif %}
             {% if user|can:"appointments.edit" and a.status != "completed" %}
             <a class="btn btn-ghost btn-sm" href="{% url 'appointment_edit' a.pk %}" title="{% t 'edit' %}" aria-label="{% t 'edit' %}">{% icon "edit" 16 %}</a>
             {% endif %}

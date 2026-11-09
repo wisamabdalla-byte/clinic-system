@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ patient.full_name }} · <code>{{ patient.file_no }}</code></p>
+  </div>
+</div>
+
+<form method="post" class="card form-card" novalidate data-plan data-price-list-fixed="{{ patient_list }}">
+  {% csrf_token %}
+  <div class="form-grid">{% for field in form %}{% include "crud/_field.html" %}{% endfor %}</div>
+  <section class="form-section" data-formset>
+    <h2>{% t "plan_steps" %}</h2>
+    <p class="muted">{% t "plan_steps_help" %}</p>
+    {{ formset.management_form }}
+    {% for e in formset.non_form_errors %}<div class="alert alert-error">{{ e }}</div>{% endfor %}
+    <div class="table-wrap">
+      <table class="table table-form">
+        <thead><tr><th>{% t "service" %}</th><th>{% t "tooth" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th><th>{% t "done" %}</th><th></th></tr></thead>
+        <tbody data-formset-body>{% for f in formset %}{% include "records/_plan_row.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+    <template data-formset-template>{% include "records/_plan_row.html" with f=formset.empty_form %}</template>
+    <button type="button" class="btn btn-ghost" data-formset-add data-prefix="{{ formset.prefix }}">{% icon "plus" 18 %}<span>{% t "add_row" %}</span></button>
+    <dl class="totals"><div class="is-good"><dt>{% t "plan_total" %}</dt><dd><span class="num" data-plan-total>0</span> <small>{{ currency }}</small></dd></div></dl>
+  </section>
+  <div class="form-actions">
+    <button class="btn btn-primary">{% t "save" %}</button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{{ prices|json_script:"price-tables" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/finance.js' %}?v=1"></script>{% endblock %}

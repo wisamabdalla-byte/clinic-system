@@ -345,6 +345,10 @@ T = {
     "today_by_status": ("مواعيد اليوم حسب الحالة", "Today by status"),
 }
 
+from .i18n_more import MORE  # noqa: E402
+
+T.update(MORE)
+
 
 def current_lang():
     lang = get_language() or settings.LANGUAGE_CODE

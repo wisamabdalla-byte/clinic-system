@@ -5,8 +5,8 @@
 <div class="login-page">
   <div class="login-card card">
     <div class="brand brand-login">
-      <span class="brand-mark">{% icon "tooth" 26 %}</span>
-      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{% t "app_tagline" %}</small></div>
+      {% include "_brand_mark.html" with size=26 %}
+      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{{ clinic_tagline }}</small></div>
     </div>
     <h1>{% t "login_title" %}</h1>
     <p class="muted">{% t "login_sub" %}</p>

@@ -1,0 +1,6 @@
+{% load ui %}<div class="day-nav">
+  <a class="btn btn-ghost btn-sm" href="{{ prev_url }}" aria-label="{% t 'previous' %}">{% icon "chevron-start" 16 %}</a>
+  <strong class="num month-label">{{ period|date:"Y-m" }}</strong>
+  <a class="btn btn-ghost btn-sm" href="{{ next_url }}" aria-label="{% t 'next' %}">{% icon "chevron-end" 16 %}</a>
+  {% if this_url and not is_current %}<a class="btn btn-ghost btn-sm" href="{{ this_url }}">{% t "this_month" %}</a>{% endif %}
+</div>

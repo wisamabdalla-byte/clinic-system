@@ -50,14 +50,14 @@ class UserFormBase(StyledModelForm):
         model = User
         fields = [
             "first_name", "last_name", "username", "email", "phone", "role", "branches",
-            "specialty", "department", "color", "is_active",
+            "specialty", "department", "color", "commission_percent", "is_active",
         ]
         widgets = {
             "branches": forms.CheckboxSelectMultiple,
             "color": forms.TextInput(attrs={"type": "color"}),
         }
 
-    doctor_fields = ("specialty", "department", "color")
+    doctor_fields = ("specialty", "department", "color", "commission_percent")
 
     def __init__(self, *args, editor=None, **kwargs):
         self.editor = editor
@@ -65,6 +65,11 @@ class UserFormBase(StyledModelForm):
         self.fields["first_name"].required = True
         self.fields["branches"].queryset = Branch.objects.filter(is_active=True)
         self.fields["username"].help_text = ""
+        self.fields["commission_percent"].required = False
+        self.fields["commission_percent"].widget.attrs.update(min=0, max=100, step="0.5")
+
+    def clean_commission_percent(self):
+        return self.cleaned_data.get("commission_percent") or 0
 
     def clean(self):
         data = super().clean()

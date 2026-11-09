@@ -30,6 +30,29 @@
     setTimeout(function () { t.remove(); }, 4400);
   });
 
+  // Forms that ask "are you sure?" before submitting
+  document.addEventListener("submit", function (e) {
+    var msg = e.target.getAttribute && e.target.getAttribute("data-confirm");
+    if (msg && !window.confirm(msg)) e.preventDefault();
+  });
+
+  // ---- Tooth chart: click a tooth to set its condition ----
+  var toothDialog = document.querySelector("[data-tooth-dialog]");
+  if (toothDialog && toothDialog.showModal) {
+    document.querySelectorAll(".chart .tooth").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var n = btn.getAttribute("data-tooth");
+        toothDialog.querySelector("[data-tooth-input]").value = n;
+        toothDialog.querySelector("[data-tooth-label]").textContent = n;
+        toothDialog.querySelector("[data-tooth-note]").value = btn.getAttribute("data-note") || "";
+        var cond = btn.getAttribute("data-condition");
+        toothDialog.querySelectorAll("input[name=condition]").forEach(function (r) { r.checked = r.value === cond; });
+        toothDialog.showModal();
+      });
+    });
+    toothDialog.querySelector("[data-tooth-close]").addEventListener("click", function () { toothDialog.close(); });
+  }
+
   // ---- Package form: add/remove service rows, live totals ----
   var pkg = document.querySelector("[data-package]");
   if (!pkg) return;

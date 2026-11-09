@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ patient.full_name }} · <code>{{ patient.file_no }}</code></p>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card form-card" novalidate>
+  {% csrf_token %}
+  <p class="muted">{% t "photo_help" %}</p>
+  <div class="form-grid">{% for field in form %}{% include "crud/_field.html" %}{% endfor %}</div>
+  <img class="photo-preview" data-photo-preview hidden alt="">
+  <datalist id="photo-areas">{% for a in areas %}<option value="{{ a }}">{% endfor %}</datalist>
+  <div class="form-actions">
+    <button class="btn btn-primary">{% icon "camera" 18 %}<span>{% t "save" %}</span></button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/finance.js' %}?v=1"></script>{% endblock %}

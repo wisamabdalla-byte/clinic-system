@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ request.branch.name }} · {% t "cashbox_sub" %}</p>
+  </div>
+  <div class="page-actions">
+    <div class="day-nav">
+      <a class="btn btn-ghost btn-sm" href="{{ prev_url }}" aria-label="{% t 'previous' %}">{% icon "chevron-start" 16 %}</a>
+      <form method="get" class="day-pick"><input type="date" name="date" class="input" value="{{ day|date:'Y-m-d' }}" data-autosubmit aria-label="{% t 'date' %}"></form>
+      <a class="btn btn-ghost btn-sm" href="{{ next_url }}" aria-label="{% t 'next' %}">{% icon "chevron-end" 16 %}</a>
+      {% if not is_today %}<a class="btn btn-ghost btn-sm" href="{{ today_url }}">{% t "today" %}</a>{% endif %}
+    </div>
+    <button class="btn btn-ghost" onclick="window.print()">{% icon "printer" 18 %}<span>{% t "print" %}</span></button>
+  </div>
+</div>
+
+<section class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "payment_method" %}</th><th>{% t "money_in" %}</th><th>{% t "nav_expenses" %}</th><th>{% t "nav_payouts" %}</th><th>{% t "net_in_box" %}</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="cell-title"><strong>{{ r.method.name }}</strong>{% if r.method.account_details %}<small>{{ r.method.account_details }}</small>{% endif %}</td>
+          <td data-label="{% t 'money_in' %}" class="cell-money-good"><span class="num">{{ r.in|money }}</span></td>
+          <td data-label="{% t 'nav_expenses' %}" class="cell-num"><span class="num">{{ r.expenses|money }}</span></td>
+          <td data-label="{% t 'nav_payouts' %}" class="cell-num"><span class="num">{{ r.payouts|money }}</span></td>
+          <td data-label="{% t 'net_in_box' %}" class="cell-money"><span class="num">{{ r.net|money }}</span> <small class="cur">{{ currency }}</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr class="total-row">
+        <th>{% t "total" %}</th>
+        <td class="cell-money-good"><span class="num">{{ totals.in|money }}</span></td>
+        <td class="cell-num"><span class="num">{{ totals.expenses|money }}</span></td>
+        <td class="cell-num"><span class="num">{{ totals.payouts|money }}</span></td>
+        <td class="cell-money"><span class="num">{{ totals.net|money }}</span> <small class="cur">{{ currency }}</small></td>
+      </tr></tfoot>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "payments_received" %} <span class="tab-n">{{ payments|length }}</span></h2>
+  {% if payments %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "invoice_no" %}</th><th>{% t "patient" %}</th><th>{% t "amount" %}</th><th>{% t "payment_method" %}</th><th>{% t "reference" %}</th><th>{% t "received_by" %}</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td data-label="{% t 'invoice_no' %}"><a href="{% url 'invoice_detail' p.invoice_id %}"><code>{{ p.invoice.number }}</code></a></td>
+          <td data-label="{% t 'patient' %}">{{ p.invoice.patient.full_name }}</td>
+          <td data-label="{% t 'amount' %}" class="cell-money"><span class="num">{{ p.amount|money }}</span></td>
+          <td data-label="{% t 'payment_method' %}"><span class="badge">{{ p.method.name }}</span></td>
+          <td data-label="{% t 'reference' %}" class="num">{{ p.reference|default:"—" }}</td>
+          <td data-label="{% t 'received_by' %}" class="cell-muted">{{ p.received_by|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty empty-sm"><span class="muted">{% t "no_payments" %}</span></div>{% endif %}
+</section>
+
+{% if expenses or payouts %}
+<div class="grid-2">
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "nav_expenses" %}</h2>
+    {% if expenses %}<ul class="kv pad">{% for e in expenses %}<li><span>{{ e.description }} <small class="muted">· {{ e.method.name }}</small></span><span class="num">{{ e.amount|money }}</span></li>{% endfor %}</ul>
+    {% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "nav_payouts" %}</h2>
+    {% if payouts %}<ul class="kv pad">{% for p in payouts %}<li><span>{{ p.doctor }} <small class="muted">· {{ p.method.name }}</small></span><span class="num">{{ p.amount|money }}</span></li>{% endfor %}</ul>
+    {% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+</div>
+{% endif %}
+{% endblock %}

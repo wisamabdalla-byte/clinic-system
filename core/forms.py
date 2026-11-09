@@ -154,3 +154,66 @@ PackageItemFormSet = inlineformset_factory(
     Package, PackageItem, form=PackageItemForm, formset=BasePackageItemFormSet,
     extra=1, can_delete=True,
 )
+
+
+IMAGE_SIGNATURES = {b"\x89PNG": "image/png", b"\xff\xd8\xff": "image/jpeg", b"RIFF": "image/webp"}
+
+
+def sniff_image(data):
+    """Content type from the file's first bytes (PNG, JPEG, WebP only)."""
+    for sig, ctype in IMAGE_SIGNATURES.items():
+        if data.startswith(sig):
+            if ctype == "image/webp" and data[8:12] != b"WEBP":
+                return None
+            return ctype
+    return None
+
+
+class ClinicProfileForm(StyledModelForm):
+    MAX_LOGO = 400 * 1024
+
+    logo_file = forms.FileField(required=False, widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}))
+    remove_logo = forms.BooleanField(required=False)
+
+    class Meta:
+        from .models import ClinicProfile
+
+        model = ClinicProfile
+        fields = ["name_ar", "name_en", "tagline_ar", "tagline_en", "phone", "address", "primary_color",
+                  "invoice_footer"]
+        widgets = {"primary_color": forms.TextInput(attrs={"type": "color"}),
+                   "invoice_footer": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["logo_file"].label = tr("logo")
+        self.fields["logo_file"].help_text = tr("logo_help")
+        self.fields["remove_logo"].label = tr("remove_logo")
+        for name in ("name_en", "tagline_en", "phone"):
+            self.fields[name].widget.attrs["dir"] = "ltr"
+
+    def clean_logo_file(self):
+        f = self.cleaned_data.get("logo_file")
+        if not f:
+            return None
+        if f.size > self.MAX_LOGO:
+            raise ValidationError(tr("logo_too_big"))
+        data = f.read()
+        ctype = sniff_image(data)
+        if not ctype:
+            raise ValidationError(tr("image_type_error"))
+        return ctype, data
+
+    def save(self, commit=True):
+        import base64
+
+        profile = super().save(commit=False)
+        logo = self.cleaned_data.get("logo_file")
+        if self.cleaned_data.get("remove_logo"):
+            profile.logo = ""
+        elif logo:
+            ctype, data = logo
+            profile.logo = f"data:{ctype};base64,{base64.b64encode(data).decode()}"
+        if commit:
+            profile.save()
+        return profile

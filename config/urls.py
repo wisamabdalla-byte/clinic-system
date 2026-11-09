@@ -6,6 +6,8 @@ urlpatterns = [
     path("django-admin/", admin.site.urls),  # emergency/technical admin only
     path("accounts/", include("accounts.urls")),
     path("", include("clinic.urls")),
+    path("", include("finance.urls")),
+    path("", include("records.urls")),
     path("", include("core.urls")),
 ]
 

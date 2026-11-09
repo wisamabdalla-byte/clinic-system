@@ -1,0 +1,37 @@
+{% extends "print_base.html" %}
+{% load ui %}
+{% block title %}{{ object.number }}{% endblock %}
+{% block back %}{% url 'invoice_detail' object.pk %}{% endblock %}
+{% block sheet %}
+<div class="sheet-title">
+  <h1>{% t "invoice_receipt" %}</h1>
+  <div><code>{{ object.number }}</code> · <span class="num">{{ object.date|date:"Y-m-d" }}</span>{% if object.is_cancelled %} · <strong class="danger-text">{% t "inv_cancelled" %}</strong>{% endif %}</div>
+</div>
+<ul class="kv sheet-kv">
+  <li><span>{% t "patient_name" %}</span><strong>{{ object.patient.full_name }}</strong></li>
+  <li><span>{% t "file_no" %}</span><code>{{ object.patient.file_no }}</code></li>
+  <li><span>{% t "doctor" %}</span><span>{{ object.doctor }}</span></li>
+  <li><span>{% t "branch" %}</span><span>{{ object.branch.name }}</span></li>
+</ul>
+<table class="table sheet-table">
+  <thead><tr><th>{% t "service" %}</th><th>{% t "tooth" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th><th>{% t "line_total" %}</th></tr></thead>
+  <tbody>
+    {% for i in items %}
+    <tr><td>{{ i.label }}</td><td class="num">{{ i.tooth|default:"" }}</td><td class="num">{{ i.quantity }}</td><td class="num">{{ i.unit_price|money }}</td><td class="num">{{ i.line_total|money }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<dl class="sheet-totals">
+  <div><dt>{% t "subtotal" %}</dt><dd><span class="num">{{ object.subtotal|money }}</span> {{ currency }}</dd></div>
+  {% if object.discount %}<div><dt>{% t "discount" %}</dt><dd><span class="num">− {{ object.discount|money }}</span> {{ currency }}</dd></div>{% endif %}
+  <div class="strong"><dt>{% t "total" %}</dt><dd><span class="num">{{ object.total|money }}</span> {{ currency }}</dd></div>
+  <div><dt>{% t "paid" %}</dt><dd><span class="num">{{ object.paid|money }}</span> {{ currency }}</dd></div>
+  <div class="strong"><dt>{% t "balance" %}</dt><dd><span class="num">{{ object.balance|money }}</span> {{ currency }}</dd></div>
+</dl>
+{% if payments %}
+<h3>{% t "payments" %}</h3>
+<table class="table sheet-table">
+  <tbody>{% for p in payments %}<tr><td class="num">{{ p.date|date:"Y-m-d" }}</td><td>{{ p.method.name }}{% if p.reference %} · <span class="num">{{ p.reference }}</span>{% endif %}</td><td class="num">{{ p.amount|money }} {{ currency }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+{% endblock %}

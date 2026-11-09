@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.choices import Department
@@ -16,6 +17,11 @@ class User(AbstractUser):
     specialty = models.CharField(max_length=120, blank=True)
     department = models.CharField(max_length=20, blank=True, choices=Department.choices)
     color = models.CharField(max_length=7, default="#0f766e")
+    # Doctor's share of collected money (after material cost), settled monthly.
+    commission_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
 
     class Meta:
         ordering = ["first_name", "last_name", "username"]

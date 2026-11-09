@@ -178,3 +178,48 @@ class AuditLog(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class ClinicProfile(models.Model):
+    """The clinic's own name, logo and colour (one row). Shown in the sidebar, sign-in page and printouts."""
+
+    name_ar = models.CharField(max_length=150, blank=True)
+    name_en = models.CharField(max_length=150, blank=True)
+    tagline_ar = models.CharField(max_length=150, blank=True)
+    tagline_en = models.CharField(max_length=150, blank=True)
+    phone = models.CharField(max_length=60, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    primary_color = models.CharField(max_length=7, default="#0f766e")
+    logo = models.TextField(blank=True, editable=False)  # data: URI, kept in the database
+    invoice_footer = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    CACHE_KEY = "clinic-profile"
+
+    @classmethod
+    def get(cls):
+        from django.core.cache import cache
+
+        profile = cache.get(cls.CACHE_KEY)
+        if profile is None:
+            profile = cls.objects.first() or cls()
+            cache.set(cls.CACHE_KEY, profile, 60)
+        return profile
+
+    def save(self, *args, **kwargs):
+        from django.core.cache import cache
+
+        if not self.pk:
+            existing = ClinicProfile.objects.first()
+            if existing:
+                self.pk = existing.pk
+        super().save(*args, **kwargs)
+        cache.delete(self.CACHE_KEY)
+
+    def display_name(self, lang):
+        if lang == "en":
+            return self.name_en or settings.CLINIC_NAME_EN
+        return self.name_ar or settings.CLINIC_NAME_AR
+
+    def display_tagline(self, lang):
+        return (self.tagline_en if lang == "en" else self.tagline_ar) or ""

@@ -8,7 +8,7 @@
   </div>
 </div>
 
-<form method="post" class="card form-card" novalidate>
+<form method="post" class="card form-card" novalidate{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
   {% csrf_token %}
   {% if form.non_field_errors %}
   <div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ patient.full_name }} · <code>{{ patient.file_no }}</code></p>
+  </div>
+</div>
+{% if patient.allergies %}<div class="alert alert-error alert-strong">{% icon "alert" 18 %}<div><strong>{% t "allergy_alert" %}:</strong> {{ patient.allergies }}</div></div>{% endif %}
+
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}
+  {% if appointment %}<input type="hidden" name="appointment" value="{{ appointment }}">{% endif %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <div class="form-grid">
+    {% for field in form %}
+      {% if field.name in "complaint examination diagnosis treatment plan_next" %}<div class="field-wide-wrap">{% include "crud/_field.html" %}</div>{% else %}{% include "crud/_field.html" %}{% endif %}
+    {% endfor %}
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary">{% t "save" %}</button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

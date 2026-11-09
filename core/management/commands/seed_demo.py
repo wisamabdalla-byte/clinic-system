@@ -71,6 +71,9 @@ PAYMENT_METHODS = [
     ("حوالة مصرفية", "Bank transfer", "transfer", True, "", 3),
 ]
 
+# Each doctor's share of collected money (after material cost)
+COMMISSIONS = {"dr.sara": 40, "dr.omar": 35, "dr.lina": 45}
+
 # username, first (ar), last (ar), role, specialty, department, color, branches
 USERS = [
     ("admin", "مدير", "النظام", Role.ADMIN, "", "", "#0f766e", []),
@@ -177,6 +180,74 @@ class Command(BaseCommand):
                 duration_minutes=services[code].duration_minutes, status="booked", source="whatsapp",
             )
 
+    def seed_finance_and_records(self, branches, services):
+        """Sample invoices (some part paid), last month closed for one doctor, expenses,
+        clinical notes and a tooth chart — only on an empty database."""
+        from django.utils import timezone
+
+        from clinic.models import Patient
+        from finance.models import DoctorPayout, Expense, Invoice, InvoiceItem, Payment, month_start
+        from finance.services import close_month
+        from records.models import ClinicalNote, ToothRecord
+
+        if Invoice.objects.exists():
+            return
+        main = branches["TRP"]
+        doctors = {u.username: u for u in User.objects.filter(role=Role.DOCTOR)}
+        reception = User.objects.filter(role=Role.RECEPTIONIST).first()
+        methods = {m.kind: m for m in PaymentMethod.objects.filter(is_active=True)}
+        patients = {p.phone: p for p in Patient.objects.all()}
+        plist = [patients[row[3]] for row in PATIENTS]
+        today = timezone.localdate()
+        last_month = month_start(month_start(today) - timedelta(days=1))
+
+        def invoice(day, idx, doctor, lines, pays):
+            inv = Invoice.objects.create(branch=main, patient=plist[idx], doctor=doctors[doctor], date=day,
+                                         doctor_percent=doctors[doctor].commission_percent, created_by=reception)
+            for code, qty, material, tooth in lines:
+                InvoiceItem.objects.create(invoice=inv, service=services[code], quantity=qty, tooth=tooth,
+                                           unit_price=services[code].price, material_cost=Decimal(material))
+            inv.recalc()
+            for pday, amount, kind, ref in pays:
+                Payment.objects.create(invoice=inv, branch=main, date=pday, amount=Decimal(amount),
+                                       method=methods[kind], reference=ref, received_by=reception)
+            inv.recalc()
+            return inv
+
+        # last month: implant with lab/material cost, crown, laser; then close Dr Omar's month and pay him
+        invoice(last_month + timedelta(days=4), 6, "dr.omar", [("DEN-009", 1, 900, "36")],
+                [(last_month + timedelta(days=4), 1500, "cash", ""), (last_month + timedelta(days=20), 1000, "transfer", "TRX-4471")])
+        invoice(last_month + timedelta(days=9), 2, "dr.sara", [("DEN-008", 1, 150, "21")],
+                [(last_month + timedelta(days=9), 600, "card", "POS-1182")])
+        invoice(last_month + timedelta(days=12), 3, "dr.lina", [("DER-008", 1, 250, "")],
+                [(last_month + timedelta(days=12), 750, "cash", "")])
+        settled = close_month(doctors["dr.omar"], last_month, None)
+        DoctorPayout.objects.create(doctor=doctors["dr.omar"], branch=main, settlement=settled,
+                                    date=month_start(today), amount=Decimal("500"), method=methods["cash"])
+
+        # this month: one paid, one part paid (patient will pay the rest later), one unpaid
+        invoice(today, 0, "dr.sara", [("DEN-001", 1, 0, "")], [(today, 30, "cash", "")])
+        invoice(today, 1, "dr.sara", [("DEN-003", 1, 0, ""), ("DEN-004", 2, 40, "16")],
+                [(today, 150, "card", "POS-2290")])
+        invoice(today, 6, "dr.omar", [("DEN-009", 1, 900, "46")], [])
+
+        for cat, amount, kind, text in [("rent", 3000, "transfer", "إيجار المقر – الشهر الحالي"),
+                                        ("lab", 900, "cash", "معمل الأسنان – زرعة وتاج"),
+                                        ("materials", 420, "cash", "مواد حشو ومستهلكات")]:
+            Expense.objects.create(branch=main, date=month_start(today), category=cat, amount=Decimal(amount),
+                                   method=methods[kind], description=text, created_by=reception)
+
+        sara = doctors["dr.sara"]
+        ClinicalNote.objects.create(
+            patient=plist[1], doctor=sara, date=today, department="dental",
+            complaint="ألم مع البارد في الضرس العلوي الأيمن", examination="تسوس متوسط في 16 و 17، لثة سليمة",
+            diagnosis="تسوس عاجي في 16 و 17", treatment="تنظيف جير، حشو كومبوزيت 16",
+            plan_next="حشو 17 في الزيارة القادمة", follow_up=today + timedelta(days=7), created_by=sara)
+        for tooth, cond, note in [(16, "filled", "كومبوزيت اليوم"), (17, "caries", "يحتاج حشو"),
+                                  (36, "root_canal", ""), (46, "crown", "زيركون"), (48, "missing", "")]:
+            ToothRecord.objects.update_or_create(patient=plist[1], tooth=tooth,
+                                                 defaults={"condition": cond, "note": note, "updated_by": sara})
+
     @transaction.atomic
     def handle(self, *args, force=False, **options):
         if not settings.DEBUG and not force:
@@ -262,7 +333,11 @@ class Command(BaseCommand):
             user.save()
             user.branches.set([branches[c] for c in branch_codes])
 
+        for username, pct in COMMISSIONS.items():
+            User.objects.filter(username=username).update(commission_percent=Decimal(pct))
+
         self.seed_patients_and_appointments(branches, services, insurance)
+        self.seed_finance_and_records(branches, services)
 
         self.stdout.write(self.style.SUCCESS(
             f"Demo data ready: {len(BRANCHES)} branches, {len(SERVICES)} services, "

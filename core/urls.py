@@ -25,4 +25,5 @@ urlpatterns = [
     path("payment-methods/new/", v.PaymentMethodCreate.as_view(), name="paymentmethod_create"),
     path("payment-methods/<int:pk>/edit/", v.PaymentMethodUpdate.as_view(), name="paymentmethod_edit"),
     path("activity/", v.AuditList.as_view(), name="audit_list"),
+    path("settings/clinic/", v.ClinicSettings.as_view(), name="clinic_settings"),
 ]

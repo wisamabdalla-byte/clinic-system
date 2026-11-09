@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ patient.full_name }} · <code>{{ patient.file_no }}</code></p>
+  </div>
+</div>
+{% if patient.allergies %}<div class="alert alert-error alert-strong">{% icon "alert" 18 %}<div><strong>{% t "allergy_alert" %}:</strong> {{ patient.allergies }}</div></div>{% endif %}
+
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}
+  <div class="form-grid">{% for field in form %}{% include "crud/_field.html" %}{% endfor %}</div>
+  <section class="form-section" data-formset>
+    <h2>{% t "medicines" %}</h2>
+    {{ formset.management_form }}
+    {% for e in formset.non_form_errors %}<div class="alert alert-error">{{ e }}</div>{% endfor %}
+    <div class="table-wrap">
+      <table class="table table-form">
+        <thead><tr><th>{% t "drug" %}</th><th>{% t "dose" %}</th><th>{% t "frequency" %}</th><th>{% t "duration" %}</th><th>{% t "instructions" %}</th><th></th></tr></thead>
+        <tbody data-formset-body>{% for f in formset %}{% include "records/_rx_row.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+    <template data-formset-template>{% include "records/_rx_row.html" with f=formset.empty_form %}</template>
+    <button type="button" class="btn btn-ghost" data-formset-add data-prefix="{{ formset.prefix }}">{% icon "plus" 18 %}<span>{% t "add_row" %}</span></button>
+  </section>
+  <div class="form-actions">
+    <button class="btn btn-primary">{% icon "printer" 18 %}<span>{% t "save_and_print" %}</span></button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/finance.js' %}?v=1"></script>{% endblock %}

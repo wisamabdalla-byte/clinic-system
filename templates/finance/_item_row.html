@@ -1,0 +1,14 @@
+{% load ui %}<tr class="formset-row">
+  <td data-label="{% t 'service' %}" class="cell-service">
+    {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+    {{ f.service }}
+    {{ f.description }}
+    {% for e in f.service.errors %}<small class="error">{{ e }}</small>{% endfor %}{% for e in f.description.errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </td>
+  <td data-label="{% t 'tooth' %}" class="w-tooth">{{ f.tooth }}</td>
+  <td data-label="{% t 'quantity' %}" class="w-qty">{{ f.quantity }}{% for e in f.quantity.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'price' %}" class="w-money">{{ f.unit_price }}{% for e in f.unit_price.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'material_cost' %}" class="w-money">{{ f.material_cost }}{% for e in f.material_cost.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'line_total' %}" class="cell-money"><span class="num" data-line-total>—</span></td>
+  <td>{% if f.instance.pk %}<label class="check-label remove-row">{{ f.DELETE }}<span>{% t "remove" %}</span></label>{% else %}<button type="button" class="btn btn-ghost btn-sm" data-remove-row aria-label="{% t 'remove' %}">{% icon "x" 16 %}</button>{% endif %}</td>
+</tr>

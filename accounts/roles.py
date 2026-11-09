@@ -50,6 +50,29 @@ PERMISSIONS = {
         "edit": {R.ADMIN, R.MANAGER, R.RECEPTIONIST},  # book / reschedule
         "status": {R.ADMIN, R.MANAGER, R.RECEPTIONIST, R.NURSE, R.DOCTOR},  # check-in, start, ...
     },
+    # Stage 3: clinical records
+    "clinical": {
+        "view": {R.ADMIN, R.MANAGER, R.DOCTOR, R.NURSE},
+        "edit": {R.ADMIN, R.DOCTOR, R.NURSE},  # notes, tooth chart, photos, treatment plans
+        "prescribe": {R.ADMIN, R.DOCTOR},
+    },
+    # Stage 4: finance
+    "invoices": {
+        "view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT, R.RECEPTIONIST},
+        "edit": {R.ADMIN, R.MANAGER, R.ACCOUNTANT, R.RECEPTIONIST},  # write invoices, take payments
+        "void": {R.ADMIN, R.MANAGER, R.ACCOUNTANT},  # remove a wrong payment
+    },
+    "doctor_accounts": {
+        "view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT, R.DOCTOR},  # a doctor sees only their own
+        "edit": {R.ADMIN, R.MANAGER, R.ACCOUNTANT},  # close a month
+        "reopen": {R.ADMIN},
+    },
+    "payouts": {"view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT}, "edit": {R.ADMIN, R.MANAGER, R.ACCOUNTANT}},
+    "expenses": {"view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT}, "edit": {R.ADMIN, R.MANAGER, R.ACCOUNTANT}},
+    "cashbox": {"view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT, R.RECEPTIONIST}},
+    "finance_reports": {"view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT}},
+    # Clinic name, logo and colours
+    "settings": {"view": {R.ADMIN}, "edit": {R.ADMIN}},
 }
 
 # Status actions a role may perform (others are refused even with "status" permission).

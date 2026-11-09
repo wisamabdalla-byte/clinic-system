@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'doctor_accounts' %}?month={{ period|date:'Y-m' }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_doctor_accounts" %}</a>
+    <h1>{{ doctor }} {% if fig.is_closed %}<span class="badge badge-good">{% t "month_closed" %}</span>{% else %}<span class="badge badge-accent">{% t "month_open" %}</span>{% endif %}</h1>
+    <p class="muted">{% t "doctor_percent" %}: <span class="num">{{ doctor.commission_percent|money }}%</span></p>
+  </div>
+  <div class="page-actions">
+    {% include "finance/_month_nav.html" %}
+    <a class="btn btn-ghost" href="{% url 'doctor_statement' doctor.pk %}">{% icon "receipt" 18 %}<span>{% t "statement" %}</span></a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card stat"><span class="stat-icon">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ fig.collected|money }}</span></span><span class="stat-label">{% t "collected" %} ({{ currency }})</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "package" 20 %}</span><span class="stat-value"><span class="num">{{ fig.material|money }}</span></span><span class="stat-label">{% t "material_cost" %}</span></div>
+  <div class="card stat"><span class="stat-icon">{% icon "activity" 20 %}</span><span class="stat-value"><span class="num">{{ fig.net|money }}</span></span><span class="stat-label">{% t "net_after_material" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "percent" 20 %}</span><span class="stat-value"><span class="num">{{ fig.doctor_share|money }}</span></span><span class="stat-label">{% t "doctor_share" %}</span></div>
+</div>
+
+{% if fig.is_closed %}
+<section class="card pad">
+  <h2>{% t "settlement" %}</h2>
+  <ul class="kv">
+    <li><span>{% t "doctor_share" %}</span><span><span class="num">{{ fig.settlement.doctor_share|money }}</span> {{ currency }}</span></li>
+    {% if fig.settlement.adjustment %}<li><span>{% t "adjustment" %}{% if fig.settlement.adjustment_note %} — {{ fig.settlement.adjustment_note }}{% endif %}</span><span><span class="num">{{ fig.settlement.adjustment|money }}</span> {{ currency }}</span></li>{% endif %}
+    <li><strong>{% t "total_due" %}</strong><strong><span class="num">{{ fig.settlement.total_due|money }}</span> {{ currency }}</strong></li>
+    <li><span>{% t "closed_by" %}</span><span>{{ fig.settlement.closed_by|default:"—" }} · <span class="num">{{ fig.settlement.created_at|date:"Y-m-d H:i" }}</span></span></li>
+  </ul>
+  <div class="form-actions">
+    {% if user|can:"payouts.edit" %}<a class="btn btn-primary" href="{% url 'payout_create' %}?doctor={{ doctor.pk }}">{% icon "send" 18 %}<span>{% t "add_payout" %}</span></a>{% endif %}
+    {% if can_reopen %}
+    <form method="post" data-confirm="{% t 'confirm_reopen' %}">{% csrf_token %}<input type="hidden" name="month" value="{{ period|date:'Y-m' }}"><input type="hidden" name="do" value="reopen"><button class="btn btn-ghost danger-text">{% icon "undo" 18 %}<span>{% t "reopen_month" %}</span></button></form>
+    {% endif %}
+  </div>
+</section>
+{% elif can_close %}
+<form method="post" class="card pad" novalidate data-confirm="{% t 'confirm_close' %}">
+  {% csrf_token %}
+  <input type="hidden" name="month" value="{{ period|date:'Y-m' }}">
+  <h2>{% t "close_month" %}</h2>
+  <p class="muted">{% t "close_month_help" %}</p>
+  {% if not month_ended %}<div class="alert alert-warn">{% t "month_not_ended" %}</div>{% endif %}
+  <div class="form-grid">{% for field in close_form %}{% include "crud/_field.html" %}{% endfor %}</div>
+  <div class="form-actions"><button class="btn btn-primary">{% icon "lock" 18 %}<span>{% t "close_month" %}</span></button></div>
+</form>
+{% endif %}
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "payments_in_month" %}</h2>
+  {% if fig.payments %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "date" %}</th><th>{% t "invoice_no" %}</th><th>{% t "patient" %}</th><th>{% t "amount" %}</th><th>{% t "material_cost" %}</th><th>{% t "net_after_material" %}</th><th>{% t "doctor_share" %}</th></tr></thead>
+      <tbody>
+        {% for p in fig.payments %}
+        <tr>
+          <td data-label="{% t 'date' %}" class="num">{{ p.date|date:"Y-m-d" }}</td>
+          <td data-label="{% t 'invoice_no' %}">{% if user|can:"invoices.view" %}<a href="{% url 'invoice_detail' p.invoice_id %}"><code>{{ p.invoice.number }}</code></a>{% else %}<code>{{ p.invoice.number }}</code>{% endif %}</td>
+          <td data-label="{% t 'patient' %}">{{ p.invoice.patient.full_name }}</td>
+          <td data-label="{% t 'amount' %}" class="cell-money"><span class="num">{{ p.amount|money }}</span></td>
+          <td data-label="{% t 'material_cost' %}" class="cell-num"><span class="num muted">{{ p.calc_material|money }}</span></td>
+          <td data-label="{% t 'net_after_material' %}" class="cell-num"><span class="num">{{ p.calc_net|money }}</span></td>
+          <td data-label="{% t 'doctor_share' %}" class="cell-money-good"><span class="num">{{ p.calc_share|money }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty empty-sm"><span class="muted">{% t "no_payments_month" %}</span></div>
+  {% endif %}
+</section>
+{% endblock %}

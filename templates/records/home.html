@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "clinical_home_sub" %}</p>
+  </div>
+</div>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "today_patients" %}</h2>
+  {% if today %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "time" %}</th><th>{% t "patient" %}</th><th>{% t "doctor" %} / {% t "service" %}</th><th>{% t "status" %}</th><th><span class="sr-only">{% t "actions" %}</span></th></tr></thead>
+      <tbody>
+        {% for a in today %}
+        <tr>
+          <td data-label="{% t 'time' %}"><strong class="num">{{ a.local_start|time:"H:i" }}</strong>{% if a.queue_number %} <span class="queue-chip num">{{ a.queue_number }}</span>{% endif %}</td>
+          <td class="cell-title"><a href="{% url 'clinical_patient' a.patient_id %}"><strong>{{ a.patient.full_name }}</strong></a><small><code>{{ a.patient.file_no }}</code></small>{% if a.patient.allergies %}<small class="error">{% icon "alert" 14 %} {{ a.patient.allergies|truncatechars:50 }}</small>{% endif %}</td>
+          <td data-label="{% t 'doctor' %}"><span class="dot" style="--c: {{ a.doctor.color }}"></span>{{ a.doctor }}<small>{{ a.service.name|default:"—" }}</small></td>
+          <td data-label="{% t 'status' %}"><span class="badge">{{ a.get_status_display }}</span></td>
+          <td class="col-actions">
+            <a class="btn btn-ghost btn-sm" href="{% url 'clinical_patient' a.patient_id %}">{% icon "clipboard" 16 %}<span>{% t "clinical_file" %}</span></a>
+            {% if user|can:"clinical.edit" %}<a class="btn btn-primary btn-sm" href="{% url 'note_create' a.patient_id %}?appointment={{ a.pk }}">{% icon "edit" 16 %}<span>{% t "write_note" %}</span></a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty empty-sm"><span class="muted">{% t "no_patients_today" %}</span></div>{% endif %}
+</section>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "recent_notes" %}</h2>
+  {% if notes %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "date" %}</th><th>{% t "patient" %}</th><th>{% t "doctor" %}</th><th>{% t "diagnosis" %}</th></tr></thead>
+      <tbody>
+        {% for n in notes %}
+        <tr>
+          <td data-label="{% t 'date' %}" class="num">{{ n.date|date:"Y-m-d" }}</td>
+          <td class="cell-title"><a href="{% url 'clinical_patient' n.patient_id %}"><strong>{{ n.patient.full_name }}</strong></a><small><code>{{ n.patient.file_no }}</code></small></td>
+          <td data-label="{% t 'doctor' %}">{{ n.doctor }}</td>
+          <td data-label="{% t 'diagnosis' %}">{{ n.diagnosis|default:n.complaint|truncatechars:80 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty empty-sm"><span class="muted">{% t "no_notes" %}</span></div>{% endif %}
+</section>
+{% endblock %}

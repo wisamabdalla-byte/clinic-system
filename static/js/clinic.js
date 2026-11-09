@@ -34,6 +34,8 @@
       picked.hidden = false;
       searchBox.hidden = true;
       list.innerHTML = "";
+      picker.setAttribute("data-price-list", p.price_list || "");
+      picker.dispatchEvent(new CustomEvent("patientchosen", { detail: p, bubbles: true }));
     }
 
     function render(results, q) {

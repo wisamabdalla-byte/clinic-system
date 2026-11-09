@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ request.branch.name }}</p>
+  </div>
+</div>
+
+<form method="post" class="card form-card" novalidate data-invoice>
+  {% csrf_token %}
+  {% if appointment %}<input type="hidden" name="appointment" value="{{ appointment.pk }}">{% endif %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+
+  <section class="form-section">
+    <h2>{% t "patient" %}</h2>
+    {% if invoice %}
+      {{ form.patient }}
+      <div class="picked"><span class="avatar">{% icon "user" 18 %}</span><div><strong>{{ patient.full_name }}</strong><small><span class="num">{{ patient.phone }}</span> · <code>{{ patient.file_no }}</code></small></div></div>
+    {% else %}
+      {% include "clinic/_patient_picker.html" with new_then="invoice" %}
+    {% endif %}
+  </section>
+
+  <section class="form-section">
+    <h2>{% t "invoice_details" %}</h2>
+    <div class="form-grid">{% for field in fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+  </section>
+
+  <section class="form-section" data-formset>
+    <h2>{% t "invoice_items" %}</h2>
+    <p class="muted">{% t "invoice_items_help" %}</p>
+    {{ formset.management_form }}
+    {% for e in formset.non_form_errors %}<div class="alert alert-error">{{ e }}</div>{% endfor %}
+    <div class="table-wrap">
+      <table class="table table-form items-table">
+        <thead>
+          <tr><th>{% t "service" %}</th><th>{% t "tooth" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th><th>{% t "material_cost" %}</th><th>{% t "line_total" %}</th><th><span class="sr-only">{% t "remove" %}</span></th></tr>
+        </thead>
+        <tbody data-formset-body>
+          {% for f in formset %}{% include "finance/_item_row.html" %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <template data-formset-template>{% include "finance/_item_row.html" with f=formset.empty_form %}</template>
+    <button type="button" class="btn btn-ghost" data-formset-add data-prefix="{{ formset.prefix }}">{% icon "plus" 18 %}<span>{% t "add_row" %}</span></button>
+
+    <dl class="totals">
+      <div><dt>{% t "subtotal" %}</dt><dd><span class="num" data-subtotal>0</span> <small>{{ currency }}</small></dd></div>
+      <div><dt>{% t "discount" %}</dt><dd><span class="num" data-discount>0</span> <small>{{ currency }}</small></dd></div>
+      <div class="is-good"><dt>{% t "total" %}</dt><dd><span class="num" data-total>0</span> <small>{{ currency }}</small></dd></div>
+      <div><dt>{% t "material_cost" %}</dt><dd><span class="num" data-material>0</span> <small>{{ currency }}</small></dd></div>
+      {% if user|can:"doctor_accounts.edit" %}<div><dt>{% t "doctor_share_est" %} (<span class="num" data-doctor-pct>0</span>%)</dt><dd><span class="num" data-doctor-share>0</span> <small>{{ currency }}</small></dd></div>{% endif %}
+    </dl>
+  </section>
+
+  {% if payform %}
+  <section class="form-section">
+    <h2>{% t "paid_now" %}</h2>
+    <p class="muted">{% t "paid_now_help" %}</p>
+    <div class="form-grid">{% for field in payform %}{% include "crud/_field.html" %}{% endfor %}</div>
+    <button type="button" class="btn btn-ghost btn-sm" data-pay-full>{% icon "check" 16 %}<span>{% t "pay_full" %}</span></button>
+  </section>
+  {% endif %}
+
+  <div class="form-actions">
+    <button class="btn btn-primary">{% t "save" %}</button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{{ prices|json_script:"price-tables" }}
+{{ doctor_percents|json_script:"doctor-percents" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/finance.js' %}?v=1"></script>{% endblock %}

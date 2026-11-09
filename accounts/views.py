@@ -70,7 +70,7 @@ class UserFormMixin(CrudFormMixin):
             {"title": tr("account_section"), "fields": [form[f] for f in account if f in form.fields]},
             {"title": tr("branches_section"), "fields": [form["branches"]]},
             {"title": tr("doctor_section"), "help": tr("doctor_section_help"),
-             "fields": [form[f] for f in ("specialty", "department", "color")]},
+             "fields": [form[f] for f in ("specialty", "department", "color", "commission_percent")]},
         ]
         return ctx
 

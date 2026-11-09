@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'doctor_accounts' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_doctor_accounts" %}</a>
+    <h1>{% t "statement" %}: {{ doctor }}</h1>
+    <p class="muted">{% t "statement_sub" %}</p>
+  </div>
+  <div class="page-actions">
+    {% if can_pay %}<a class="btn btn-primary" href="{% url 'payout_create' %}?doctor={{ doctor.pk }}">{% icon "send" 18 %}<span>{% t "add_payout" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="stats stats-4">
+  <div class="card stat"><span class="stat-icon">{% icon "percent" 20 %}</span><span class="stat-value"><span class="num">{{ due|money }}</span></span><span class="stat-label">{% t "total_earned" %} ({{ currency }})</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "send" 20 %}</span><span class="stat-value"><span class="num">{{ paid|money }}</span></span><span class="stat-label">{% t "total_paid_out" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ balance|money }}</span></span><span class="stat-label">{% t "balance_owed" %}</span></div>
+</div>
+
+<section class="card">
+  {% if lines %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "date" %}</th><th>{% t "description" %}</th><th>{% t "earned" %}</th><th>{% t "paid_out" %}</th><th>{% t "balance" %}</th></tr></thead>
+      <tbody>
+        {% for r in lines %}
+        <tr>
+          <td data-label="{% t 'date' %}" class="num">{{ r.date|date:"Y-m-d" }}</td>
+          <td data-label="{% t 'description' %}" class="cell-title">
+            {% if r.kind == "settlement" %}<a href="{% url 'doctor_month' doctor.pk %}?month={{ r.obj.period|date:'Y-m' }}">{{ r.label }}</a>{% if r.obj.adjustment %}<small>{% t "adjustment" %}: <span class="num">{{ r.obj.adjustment|money }}</span> {{ r.obj.adjustment_note }}</small>{% endif %}
+            {% else %}{{ r.label }}{% if r.obj.reference %}<small class="num">{{ r.obj.reference }}</small>{% endif %}{% if r.obj.notes %}<small>{{ r.obj.notes }}</small>{% endif %}{% endif %}
+          </td>
+          <td data-label="{% t 'earned' %}" class="cell-money-good">{% if r.credit %}<span class="num">{{ r.credit|money }}</span>{% endif %}</td>
+          <td data-label="{% t 'paid_out' %}" class="cell-money">{% if r.debit %}<span class="num">{{ r.debit|money }}</span>{% endif %}</td>
+          <td data-label="{% t 'balance' %}" class="cell-money"><span class="num">{{ r.balance|money }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><span class="muted">{% t "statement_empty" %}</span></div>
+  {% endif %}
+</section>
+{% endblock %}

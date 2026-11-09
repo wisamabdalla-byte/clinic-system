@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'patient_detail' object.pk %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "patient_file" %}</a>
+    <h1>{{ object.full_name }}</h1>
+    <p class="muted"><code>{{ object.file_no }}</code> · {{ object.get_gender_display }}{% if object.age is not None %} · <span class="num">{{ object.age }}</span> {% t "years" %}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    {% if tab == "notes" and can_edit %}<a class="btn btn-primary" href="{% url 'note_create' object.pk %}">{% icon "plus" 18 %}<span>{% t "write_note" %}</span></a>{% endif %}
+    {% if tab == "rx" and can_prescribe %}<a class="btn btn-primary" href="{% url 'rx_create' object.pk %}">{% icon "plus" 18 %}<span>{% t "new_rx" %}</span></a>{% endif %}
+    {% if tab == "plans" and can_edit %}<a class="btn btn-primary" href="{% url 'plan_create' object.pk %}">{% icon "plus" 18 %}<span>{% t "new_plan" %}</span></a>{% endif %}
+    {% if tab == "photos" and can_edit %}<a class="btn btn-primary" href="{% url 'photo_create' object.pk %}">{% icon "camera" 18 %}<span>{% t "add_photo" %}</span></a>{% endif %}
+  </div>
+</div>
+
+{% if object.allergies %}<div class="alert alert-error alert-strong">{% icon "alert" 18 %}<div><strong>{% t "allergy_alert" %}:</strong> {{ object.allergies }}</div></div>{% endif %}
+{% if object.chronic_conditions %}<div class="alert alert-warn alert-strong">{% icon "activity" 18 %}<div><strong>{% t "chronic_conditions" %}:</strong> {{ object.chronic_conditions }}</div></div>{% endif %}
+
+<div class="card">
+  <nav class="tabs">
+    {% for t in tabs %}<a href="{{ t.url }}" class="{% if t.key == tab %}is-on{% endif %}">{{ t.label }}{% if t.n is not None %} <span class="tab-n">{{ t.n }}</span>{% endif %}</a>{% endfor %}
+  </nav>
+
+  {% if tab == "notes" %}
+    {% if notes %}
+    <div class="note-list">
+      {% for n in notes %}
+      <article class="note">
+        <header>
+          <strong class="num">{{ n.date|date:"Y-m-d" }}</strong>
+          <span><span class="dot" style="--c: {{ n.doctor.color }}"></span>{{ n.doctor }}</span>
+          {% if n.department %}<span class="badge">{{ n.get_department_display }}</span>{% endif %}
+          {% if can_edit %}<a class="btn btn-ghost btn-sm" href="{% url 'note_edit' n.pk %}">{% icon "edit" 16 %}<span>{% t "edit" %}</span></a>{% endif %}
+        </header>
+        <dl>
+          {% if n.complaint %}<dt>{% t "complaint" %}</dt><dd class="pre">{{ n.complaint }}</dd>{% endif %}
+          {% if n.examination %}<dt>{% t "examination" %}</dt><dd class="pre">{{ n.examination }}</dd>{% endif %}
+          {% if n.diagnosis %}<dt>{% t "diagnosis" %}</dt><dd class="pre">{{ n.diagnosis }}</dd>{% endif %}
+          {% if n.treatment %}<dt>{% t "treatment" %}</dt><dd class="pre">{{ n.treatment }}</dd>{% endif %}
+          {% if n.plan_next %}<dt>{% t "plan_next" %}</dt><dd class="pre">{{ n.plan_next }}</dd>{% endif %}
+          {% if n.follow_up %}<dt>{% t "follow_up" %}</dt><dd class="num">{{ n.follow_up|date:"Y-m-d" }}</dd>{% endif %}
+        </dl>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty"><span class="muted">{% t "no_notes" %}</span></div>{% endif %}
+
+  {% elif tab == "teeth" %}
+    <div class="pad">
+      <p class="muted">{% t "tooth_chart_help" %}</p>
+      <div class="chart" dir="ltr">
+        <div class="chart-side"><span>{% t "right" %}</span><span>{% t "left" %}</span></div>
+        <div class="chart-row">{% for tooth in upper %}{% include "records/_tooth.html" %}{% endfor %}</div>
+        <div class="chart-row chart-lower">{% for tooth in lower %}{% include "records/_tooth.html" %}{% endfor %}</div>
+      </div>
+      <div class="legend">{% for v, l in conditions %}<span><i class="tc-swatch tc-{{ v }}"></i>{{ l }}</span>{% endfor %}</div>
+    </div>
+    {% if charted %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>{% t "tooth" %}</th><th>{% t "condition" %}</th><th>{% t "note" %}</th><th>{% t "updated" %}</th></tr></thead>
+        <tbody>{% for r in charted %}<tr><td class="num"><strong>{{ r.tooth }}</strong></td><td data-label="{% t 'condition' %}"><i class="tc-swatch tc-{{ r.condition }}"></i> {{ r.get_condition_display }}</td><td data-label="{% t 'note' %}">{{ r.note|default:"—" }}</td><td data-label="{% t 'updated' %}" class="cell-muted">{{ r.updated_by|default:"" }} · <span class="num">{{ r.updated_at|date:"Y-m-d" }}</span></td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% if can_edit %}
+    <dialog class="tooth-dialog card" data-tooth-dialog>
+      <form method="post" action="{% url 'tooth_save' object.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="tooth" data-tooth-input>
+        <h2>{% t "tooth" %} <span class="num" data-tooth-label></span></h2>
+        <div class="tooth-options">
+          {% for v, l in conditions %}<label><input type="radio" name="condition" value="{{ v }}"><i class="tc-swatch tc-{{ v }}"></i>{{ l }}</label>{% endfor %}
+        </div>
+        <div class="field"><label for="tooth-note">{% t "note" %}</label><input id="tooth-note" class="input" name="note" maxlength="255" data-tooth-note></div>
+        <div class="form-actions">
+          <button class="btn btn-primary">{% t "save" %}</button>
+          <button type="button" class="btn btn-ghost" data-tooth-close>{% t "cancel" %}</button>
+        </div>
+      </form>
+    </dialog>
+    {% endif %}
+
+  {% elif tab == "rx" %}
+    {% if prescriptions %}
+    <div class="note-list">
+      {% for rx in prescriptions %}
+      <article class="note">
+        <header>
+          <strong class="num">{{ rx.date|date:"Y-m-d" }}</strong><span>{{ rx.doctor }}</span>
+          <a class="btn btn-ghost btn-sm" href="{% url 'rx_print' rx.pk %}" target="_blank">{% icon "printer" 16 %}<span>{% t "print" %}</span></a>
+        </header>
+        <ol class="rx-lines">{% for i in rx.items.all %}<li><strong>{{ i.drug }}</strong> {{ i.dose }} · {{ i.frequency }}{% if i.duration %} · {{ i.duration }}{% endif %}{% if i.instructions %}<small>{{ i.instructions }}</small>{% endif %}</li>{% endfor %}</ol>
+        {% if rx.notes %}<p class="pre muted">{{ rx.notes }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty"><span class="muted">{% t "no_rx" %}</span></div>{% endif %}
+
+  {% elif tab == "plans" %}
+    {% if plans %}
+    <div class="note-list">
+      {% for plan in plans %}
+      <article class="note">
+        <header>
+          <strong>{{ plan.title }}</strong>
+          <span class="badge {{ plan.status_class }}">{{ plan.get_status_display }}</span>
+          <span class="muted">{{ plan.doctor }} · <span class="num">{{ plan.created_at|date:"Y-m-d" }}</span></span>
+          {% if can_edit %}<a class="btn btn-ghost btn-sm" href="{% url 'plan_edit' plan.pk %}">{% icon "edit" 16 %}<span>{% t "edit" %}</span></a>{% endif %}
+          {% if can_invoice %}<a class="btn btn-ghost btn-sm" href="{% url 'invoice_create' %}?plan={{ plan.pk }}">{% icon "receipt" 16 %}<span>{% t "invoice_done_items" %}</span></a>{% endif %}
+        </header>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>{% t "service" %}</th><th>{% t "tooth" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th><th>{% t "status" %}</th></tr></thead>
+            <tbody>{% for i in plan.items.all %}<tr><td class="cell-title"><strong>{{ i.service.name }}</strong></td><td data-label="{% t 'tooth' %}" class="num">{{ i.tooth|default:"—" }}</td><td data-label="{% t 'quantity' %}" class="num">{{ i.quantity }}</td><td data-label="{% t 'price' %}" class="cell-money"><span class="num">{{ i.price|money }}</span></td><td data-label="{% t 'status' %}">{% if i.is_done %}<span class="badge badge-good">{% t "done" %} <span class="num">{{ i.done_on|date:"Y-m-d" }}</span></span>{% else %}<span class="badge badge-muted">{% t "planned" %}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+        <p class="plan-foot"><span>{% t "progress" %}: <strong class="num">{{ plan.done_count }}/{{ plan.items.all|length }}</strong></span><span>{% t "total" %}: <strong class="num">{{ plan.total|money }}</strong> {{ currency }}</span></p>
+        {% if plan.notes %}<p class="pre muted">{{ plan.notes }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty"><span class="muted">{% t "no_plans" %}</span></div>{% endif %}
+
+  {% elif tab == "photos" %}
+    {% if photo_groups %}
+    <div class="pad photo-groups">
+      {% for g in photo_groups %}
+      <section>
+        <h3>{{ g.area }}</h3>
+        <div class="photo-strip">
+          {% for ph in g.photos %}
+          <figure class="photo">
+            <a href="{% url 'photo_image' ph.pk %}" target="_blank"><img src="{% url 'photo_image' ph.pk %}" alt="{{ g.area }} {{ ph.taken_on|date:'Y-m-d' }}" loading="lazy"></a>
+            <figcaption>
+              <span class="badge {% if ph.stage == 'after' %}badge-good{% elif ph.stage == 'before' %}badge-accent{% else %}badge-info{% endif %}">{{ ph.get_stage_display }}</span>
+              <span class="num">{{ ph.taken_on|date:"Y-m-d" }}</span>
+              {% if can_edit %}<form method="post" action="{% url 'photo_delete' ph.pk %}" data-confirm="{% t 'confirm_delete_photo' %}">{% csrf_token %}<button class="btn btn-ghost btn-sm danger-text" title="{% t 'delete' %}" aria-label="{% t 'delete' %}">{% icon "trash" 14 %}</button></form>{% endif %}
+              {% if ph.note %}<small>{{ ph.note }}</small>{% endif %}
+            </figcaption>
+          </figure>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty"><span class="muted">{% t "no_photos" %}</span></div>{% endif %}
+  {% endif %}
+</div>
+{% endblock %}

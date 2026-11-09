@@ -1,7 +1,7 @@
 {% extends "crud/form.html" %}
 {% load ui %}
 {% block extra %}
-<input type="hidden" name="then" value="{% if then_book %}book{% endif %}">
+<input type="hidden" name="then" value="{{ then }}">
 {% endblock %}
 {% block actions %}
   {% if user|can:"appointments.edit" %}

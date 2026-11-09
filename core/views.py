@@ -67,7 +67,7 @@ class DashboardView(PermissionMixin, TemplateView):
             departments=[(label, dept_counts.get(value, 0)) for value, label in Department.choices],
             stages=[
                 {"n": n, "label": tr(f"stage_{n}"),
-                 "state": "done" if n <= 2 else ("next" if n == 3 else "planned")}
+                 "state": "done" if n <= 4 else ("next" if n == 5 else "planned")}
                 for n in range(1, 8)
             ],
         )
@@ -92,6 +92,8 @@ class DashboardView(PermissionMixin, TemplateView):
         ctx["quick"] = [
             q for q in [
                 ("book", "", "appointment_create", "appointments.edit", "calendar"),
+                ("add", "ent_invoice", "invoice_create", "invoices.edit", "receipt"),
+                ("add", "ent_expense", "expense_create", "expenses.edit", "minus-circle"),
                 ("add", "ent_patient", "patient_create", "patients.edit", "user"),
                 ("add", "ent_service", "service_create", "services.edit", "activity"),
                 ("add", "ent_package", "package_create", "packages.edit", "package"),
@@ -416,3 +418,32 @@ class AuditList(CrudListView):
         # Translate the action labels at request time, in the user's language.
         self.filters = [("action", "action", [(a, tr(f"act_{a}")) for a in AuditLog.ACTIONS])]
         return super().get_context_data(**kwargs)
+
+
+# ---------------------------------------------------------------- clinic settings (branding)
+class ClinicSettings(CrudFormMixin, UpdateView):
+    module = "settings"
+    entity_key, list_url = "nav_clinic_settings", "clinic_settings"
+    template_name = "core/clinic_settings.html"
+
+    def get_form_class(self):
+        from .forms import ClinicProfileForm
+
+        return ClinicProfileForm
+
+    def get_object(self, queryset=None):
+        from .models import ClinicProfile
+
+        return ClinicProfile.objects.first() or ClinicProfile()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        form = ctx["form"]
+        ctx["title"] = tr("nav_clinic_settings")
+        ctx["sections"] = [
+            {"title": tr("brand_names"), "fields": [form[f] for f in ("name_ar", "name_en", "tagline_ar", "tagline_en")]},
+            {"title": tr("brand_look"), "help": tr("brand_look_help"),
+             "fields": [form[f] for f in ("logo_file", "remove_logo", "primary_color")]},
+            {"title": tr("brand_print"), "fields": [form[f] for f in ("phone", "address", "invoice_footer")]},
+        ]
+        return ctx

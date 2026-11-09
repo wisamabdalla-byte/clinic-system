@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% if scope == "all" %}{% t "all_branches" %}{% else %}{{ request.branch.name }}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    {% include "finance/_month_nav.html" %}
+    <div class="segmented">
+      <a href="?month={{ period|date:'Y-m' }}" class="{% if scope != 'all' %}is-on{% endif %}">{% t "this_branch" %}</a>
+      <a href="?month={{ period|date:'Y-m' }}&scope=all" class="{% if scope == 'all' %}is-on{% endif %}">{% t "all_branches" %}</a>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card stat"><span class="stat-icon">{% icon "receipt" 20 %}</span><span class="stat-value num">{{ invoiced|money }}</span><span class="stat-label">{% t "invoiced" %} ({{ currency }})</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "wallet" 20 %}</span><span class="stat-value num">{{ collected|money }}</span><span class="stat-label">{% t "collected" %}</span></div>
+  <div class="card stat"><span class="stat-icon">{% icon "percent" 20 %}</span><span class="stat-value num">{{ doctor_share|money }}</span><span class="stat-label">{% t "doctor_shares" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "minus-circle" 20 %}</span><span class="stat-value num">{{ expenses_total|money }}</span><span class="stat-label">{% t "nav_expenses" %}</span></div>
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "month_result" %}</h2>
+    <ul class="kv">
+      <li><span>{% t "collected" %}</span><span><span class="num">{{ collected|money }}</span> {{ currency }}</span></li>
+      <li><span>− {% t "doctor_shares" %}</span><span><span class="num">{{ doctor_share|money }}</span> {{ currency }}</span></li>
+      <li><span>− {% t "nav_expenses" %}</span><span><span class="num">{{ expenses_total|money }}</span> {{ currency }}</span></li>
+      <li class="kv-strong"><strong>{% t "clinic_net" %}</strong><strong><span class="num">{{ clinic_net|money }}</span> {{ currency }}</strong></li>
+    </ul>
+    <p class="muted small">{% t "clinic_net_help" %}</p>
+    <ul class="kv">
+      <li><span>{% t "material_in_collected" %}</span><span><span class="num">{{ material|money }}</span> {{ currency }}</span></li>
+      <li><span>{% t "payouts_this_month" %}</span><span><span class="num">{{ payouts_total|money }}</span> {{ currency }}</span></li>
+      <li><span>{% t "outstanding_all" %}</span><span><span class="num">{{ outstanding|money }}</span> {{ currency }}</span></li>
+    </ul>
+  </section>
+  <section class="card pad">
+    <h2>{% t "collected_by_method" %}</h2>
+    {% if methods %}<ul class="kv">{% for m in methods %}<li><span>{{ m.method.name }}</span><span><span class="num">{{ m.amount|money }}</span> {{ currency }}</span></li>{% endfor %}</ul>
+    {% else %}<p class="muted">—</p>{% endif %}
+    <h2 class="mt">{% t "expenses_by_category" %}</h2>
+    {% if categories %}<ul class="kv">{% for c in categories %}<li><span>{{ c.label }}</span><span><span class="num">{{ c.amount|money }}</span> {{ currency }}</span></li>{% endfor %}</ul>
+    {% else %}<p class="muted">—</p>{% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "by_doctor" %}</h2>
+  {% if doctors %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% t "doctor" %}</th><th>{% t "collected" %}</th><th>{% t "material_cost" %}</th><th>{% t "doctor_share" %}</th><th>{% t "clinic_part" %}</th></tr></thead>
+      <tbody>
+        {% for d in doctors %}
+        <tr>
+          <td class="cell-title"><span class="dot" style="--c: {{ d.doctor.color }}"></span><strong>{{ d.doctor }}</strong></td>
+          <td data-label="{% t 'collected' %}" class="cell-money"><span class="num">{{ d.collected|money }}</span></td>
+          <td data-label="{% t 'material_cost' %}" class="cell-num"><span class="num muted">{{ d.material|money }}</span></td>
+          <td data-label="{% t 'doctor_share' %}" class="cell-money-good"><span class="num">{{ d.share|money }}</span></td>
+          <td data-label="{% t 'clinic_part' %}" class="cell-num"><span class="num">{{ d.clinic|money }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty empty-sm"><span class="muted">{% t "no_payments_month" %}</span></div>{% endif %}
+</section>
+{% endblock %}
