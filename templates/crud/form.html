@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+  </div>
+</div>
+
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  {% if sections %}
+    {% for s in sections %}
+    <section class="form-section">
+      <h2>{{ s.title }}</h2>
+      {% if s.help %}<p class="muted">{{ s.help }}</p>{% endif %}
+      <div class="form-grid">{% for field in s.fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+    </section>
+    {% endfor %}
+  {% else %}
+    <div class="form-grid">{% for field in form.visible_fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+  {% endif %}
+  {% for h in form.hidden_fields %}{{ h }}{% endfor %}
+
+  {% block extra %}{% endblock %}
+
+  <div class="form-actions">
+    <button class="btn btn-primary">{% t "save" %}</button>
+    {% block actions %}{% endblock %}
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

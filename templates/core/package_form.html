@@ -1,0 +1,42 @@
+{% extends "crud/form.html" %}
+{% load ui %}
+{% block extra %}
+<section class="form-section" data-package>
+  <h2>{% t "package_items" %}</h2>
+  {{ formset.management_form }}
+  {% for e in formset.non_form_errors %}<div class="alert alert-error">{{ e }}</div>{% endfor %}
+  <div class="table-wrap">
+    <table class="table table-form">
+      <thead>
+        <tr><th>{% t "service" %}</th><th>{% t "quantity" %}</th><th>{% t "original_total" %}</th><th><span class="sr-only">{% t "remove" %}</span></th></tr>
+      </thead>
+      <tbody data-formset-body>
+        {% for f in formset %}
+        <tr class="formset-row">
+          <td data-label="{% t 'service' %}">{% for h in f.hidden_fields %}{{ h }}{% endfor %}{{ f.service }}{% for e in f.service.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+          <td data-label="{% t 'quantity' %}" class="w-qty">{{ f.quantity }}{% for e in f.quantity.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+          <td data-label="{% t 'original_total' %}" class="cell-money"><span class="num" data-line-total>—</span></td>
+          <td>{% if f.instance.pk %}<label class="check-label remove-row">{{ f.DELETE }}<span>{% t "remove" %}</span></label>{% else %}<button type="button" class="btn btn-ghost btn-sm" data-remove-row aria-label="{% t 'remove' %}">{% icon "x" 16 %}</button>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <template data-formset-template>
+    <tr class="formset-row">
+      <td data-label="{% t 'service' %}">{% for h in formset.empty_form.hidden_fields %}{{ h }}{% endfor %}{{ formset.empty_form.service }}</td>
+      <td data-label="{% t 'quantity' %}" class="w-qty">{{ formset.empty_form.quantity }}</td>
+      <td data-label="{% t 'original_total' %}" class="cell-money"><span class="num" data-line-total>—</span></td>
+      <td><button type="button" class="btn btn-ghost btn-sm" data-remove-row aria-label="{% t 'remove' %}">{% icon "x" 16 %}</button></td>
+    </tr>
+  </template>
+  <button type="button" class="btn btn-ghost" data-formset-add data-prefix="{{ formset.prefix }}">{% icon "plus" 18 %}<span>{% t "add_row" %}</span></button>
+
+  <dl class="totals">
+    <div><dt>{% t "original_total" %}</dt><dd><span class="num" data-original-total>0.00</span> <small>{{ currency }}</small></dd></div>
+    <div><dt>{% t "price" %}</dt><dd><span class="num" data-package-price>0.00</span> <small>{{ currency }}</small></dd></div>
+    <div class="is-good"><dt>{% t "savings" %}</dt><dd><span class="num" data-savings>0.00</span> <small>{{ currency }}</small></dd></div>
+  </dl>
+</section>
+{{ service_prices|json_script:"service-prices" }}
+{% endblock %}

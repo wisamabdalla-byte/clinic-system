@@ -1,0 +1,10 @@
+{% extends "crud/form.html" %}
+{% load ui %}
+{% block extra %}
+<input type="hidden" name="then" value="{% if then_book %}book{% endif %}">
+{% endblock %}
+{% block actions %}
+  {% if user|can:"appointments.edit" %}
+  <button class="btn btn-ghost" name="then" value="book">{% icon "calendar" 18 %}<span>{% t "save_and_book" %}</span></button>
+  {% endif %}
+{% endblock %}

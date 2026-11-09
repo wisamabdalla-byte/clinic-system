@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% t "calendar" %}</h1>
+    <p class="muted">{{ request.branch.name }}{% if can_book %} · {% t "click_slot_hint" %}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% url 'appointment_list' %}?date={{ day|date:'Y-m-d' }}">{% icon "list" 18 %}<span>{% t "list_view" %}</span></a>
+    {% if can_book %}<a class="btn btn-primary" href="{% url 'appointment_create' %}?date={{ day|date:'Y-m-d' }}">{% icon "plus" 18 %}<span>{% t "book" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="toolbar">
+    {% include "clinic/_day_nav.html" %}
+    <span class="toolbar-spacer"></span>
+    <form method="get">
+      <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+      <select name="doctor" class="input select" data-autosubmit aria-label="{% t 'doctor' %}">
+        <option value="">{% t "all_doctors" %}</option>
+        {% for d in doctors %}<option value="{{ d.pk }}"{% if chosen_doctor == d.pk|stringformat:"s" %} selected{% endif %}>{{ d }}</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% if columns %}
+  <div class="cal-scroll">
+    <div class="cal" style="--cols: {{ columns|length }}">
+      <div class="cal-head cal-corner"></div>
+      {% for col in columns %}
+      <div class="cal-head"><span class="dot" style="--c: {{ col.doctor.color }}"></span><strong>{{ col.doctor }}</strong><small>{{ col.doctor.specialty }}</small></div>
+      {% endfor %}
+
+      <div class="cal-hours" style="height: {{ grid_height }}px">
+        {% for h in hours %}<span style="top: {{ h.top }}px" class="num">{{ h.label }}</span>{% endfor %}
+      </div>
+      {% for col in columns %}
+      <div class="cal-col{% if can_book %} is-bookable{% endif %}" style="height: {{ grid_height }}px"
+           data-doctor="{{ col.doctor.pk }}" data-date="{{ day|date:'Y-m-d' }}"
+           data-first-hour="{{ first_hour }}" data-px="{{ px_per_min }}"
+           data-book-url="{% url 'appointment_create' %}">
+        {% for h in hours %}<i class="cal-line" style="top: {{ h.top }}px"></i>{% endfor %}
+        {% if now_top is not None %}<i class="cal-now" style="top: {{ now_top }}px"></i>{% endif %}
+        {% for a in col.items %}
+        <a class="cal-appt status-{{ a.status }}{% if a.short %} is-short{% endif %}" style="top: {{ a.top }}px; height: {{ a.height }}px; --c: {{ col.doctor.color }}"
+           href="{% url 'patient_detail' a.patient_id %}" title="{{ a.patient.full_name }} · {{ a.local_start|time:'H:i' }}–{{ a.local_end|time:'H:i' }}">
+          <strong>{{ a.patient.full_name }}</strong>
+          <span class="num">{{ a.local_start|time:"H:i" }}–{{ a.local_end|time:"H:i" }}</span>
+          {% if a.service %}<span>{{ a.service.name }}</span>{% endif %}
+          <em class="badge {{ a.status_class }}">{{ a.get_status_display }}</em>
+        </a>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="empty">{% icon "users" 28 %}<strong>{% t "no_doctors" %}</strong></div>
+  {% endif %}
+</div>
+{% endblock %}

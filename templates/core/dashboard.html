@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{% t "nav_dashboard" %}{% endblock %}
+{% block content %}
+{% firstof user.first_name user.username as display_name %}
+<div class="page-head">
+  <div>
+    <h1>{% t "welcome" display_name %}</h1>
+    <p class="muted">{% t "dash_sub" %}{% if request.branch %} · {{ request.branch.name }}{% endif %}</p>
+  </div>
+</div>
+
+{% if today %}
+<div class="stats">
+  {% for s in today %}
+  <a class="stat card stat-link" href="{{ s.url }}">
+    <span class="stat-icon stat-icon-accent">{% icon s.icon 20 %}</span>
+    <span class="stat-value num">{{ s.value }}</span>
+    <span class="stat-label">{{ s.label }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="stats">
+  {% for s in stats %}
+  <div class="stat card">
+    <span class="stat-icon">{% icon s.icon 20 %}</span>
+    <span class="stat-value num">{{ s.value }}</span>
+    <span class="stat-label">{{ s.label }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "staff_by_role" %}</h2>
+    <ul class="kv">
+      {% for label, n in roles %}<li><span>{{ label }}</span><strong class="num">{{ n }}</strong></li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card pad">
+    <h2>{% t "services_by_dept" %}</h2>
+    <ul class="kv">
+      {% for label, n in departments %}<li><span>{{ label }}</span><strong class="num">{{ n }}</strong></li>{% endfor %}
+    </ul>
+    {% if quick %}
+    <h2 class="mt">{% t "quick_actions" %}</h2>
+    <div class="quick">
+      {% for q in quick %}<a class="btn btn-ghost" href="{{ q.url }}">{% icon q.icon 18 %}<span>{{ q.label }}</span></a>{% endfor %}
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<section class="card pad">
+  <h2>{% t "roadmap" %}</h2>
+  <ol class="stages">
+    {% for s in stages %}
+    <li class="stage is-{{ s.state }}">
+      <span class="stage-n num">{{ s.n }}</span>
+      <span class="stage-label">{{ s.label }}</span>
+      <span class="badge {% if s.state == 'done' %}badge-good{% elif s.state == 'next' %}badge-accent{% else %}badge-muted{% endif %}">
+        {% if s.state == "done" %}{% t "stage_done" %}{% elif s.state == "next" %}{% t "stage_next" %}{% else %}{% t "stage_planned" %}{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}

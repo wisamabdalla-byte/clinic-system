@@ -1,0 +1,15 @@
+{% load ui %}{% with w=field.field.widget %}
+<div class="field{% if w.input_type == 'checkbox' and not w.allow_multiple_selected %} field-check{% endif %}{% if field.name == 'description' or field.name == 'address' or w.allow_multiple_selected %} field-wide{% endif %}{% if field.errors %} has-error{% endif %}">
+  {% if w.input_type == 'checkbox' and not w.allow_multiple_selected %}
+    <label class="check-label">{{ field }}<span>{{ field.label }}</span></label>
+  {% elif w.allow_multiple_selected %}
+    <span class="field-label">{{ field.label }}</span>
+    {{ field }}
+  {% else %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span class="opt">({% t "optional" %})</span>{% endif %}</label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<small class="help">{{ field.help_text|safe }}</small>{% endif %}
+  {% for e in field.errors %}<small class="error">{{ e }}</small>{% endfor %}
+</div>
+{% endwith %}

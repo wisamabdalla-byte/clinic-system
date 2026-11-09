@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{% t "forbidden_title" %}{% endblock %}
+{% block content %}
+<div class="card empty">
+  {% icon "lock" 32 %}
+  <strong>{% t "forbidden_title" %}</strong>
+  <p class="muted">{% t "forbidden_text" %}</p>
+  <a class="btn btn-primary" href="{% url 'dashboard' %}">{% t "nav_dashboard" %}</a>
+</div>
+{% endblock %}

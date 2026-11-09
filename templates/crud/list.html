@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p class="muted">{{ subtitle }}</p>{% endif %}
+  </div>
+  <div class="page-actions">
+    {% for l in header_links %}<a class="btn btn-ghost" href="{{ l.url }}">{% icon l.icon 18 %}<span>{{ l.label }}</span></a>{% endfor %}
+    {% if create_url %}<a class="btn btn-primary" href="{{ create_url }}">{% icon "plus" 18 %}<span>{% t "add" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <form class="toolbar" method="get">
+    {% if has_search %}
+    <label class="search">
+      {% icon "search" 18 %}
+      <input type="search" name="q" value="{{ q }}" placeholder="{% t 'search_placeholder' %}" aria-label="{% t 'search' %}">
+    </label>
+    {% endif %}
+    {% for f in filter_controls %}
+    <select name="{{ f.param }}" class="input select" data-autosubmit aria-label="{{ f.label }}">
+      <option value="">{{ f.label }}: {% t "all" %}</option>
+      {% for v, l in f.choices %}<option value="{{ v }}"{% if v == f.value %} selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+    {% endfor %}
+    {% if has_status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+    {% if has_search %}<button class="btn btn-ghost">{% t "search" %}</button>{% endif %}
+    <span class="toolbar-spacer"></span>
+    {% if has_status %}
+    <div class="segmented" role="group" aria-label="{% t 'status' %}">
+      {% for value, label in status_options %}
+      <a href="{% qs status=value page='' %}" class="{% if status == value %}is-on{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </form>
+
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+          {% if has_actions %}<th class="col-actions"><span class="sr-only">{% t "actions" %}</span></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr{% if row.inactive %} class="is-inactive"{% endif %}>
+          {% for c in row.cells %}
+          <td class="cell-{{ c.kind }}" data-label="{{ c.header }}">
+            {% if c.kind == "title" %}
+              <strong>{{ c.value }}</strong>{% if row.inactive %} <span class="badge badge-muted">{% t "inactive" %}</span>{% endif %}
+              {% if c.sub %}<small>{{ c.sub }}</small>{% endif %}
+            {% elif c.kind == "money" or c.kind == "money-muted" or c.kind == "money-good" %}
+              <span class="num">{{ c.value|money }}</span> <small class="cur">{{ currency }}</small>
+            {% elif c.kind == "badge" %}
+              <span class="badge">{{ c.value }}</span>
+            {% elif c.kind == "badge-opt" %}
+              {% if c.value %}<span class="badge badge-accent">{{ c.value }}</span>{% else %}<span class="muted">—</span>{% endif %}
+            {% elif c.kind == "date" %}
+              <span class="num">{{ c.value|date:"Y-m-d" }}</span>
+            {% elif c.kind == "code" %}
+              <code>{{ c.value }}</code>
+            {% elif c.kind == "datetime" %}
+              {% if c.value.year %}<span class="num">{{ c.value|date:"Y-m-d H:i" }}</span>{% else %}<span class="muted">{{ c.value }}</span>{% endif %}
+            {% else %}
+              {{ c.value|default:"—" }}{% if c.sub %}<small>{{ c.sub }}</small>{% endif %}
+            {% endif %}
+          </td>
+          {% endfor %}
+          {% if has_actions %}
+          <td class="col-actions">
+            {% for l in row.links %}<a class="btn btn-ghost btn-sm" href="{{ l.url }}" title="{{ l.label }}" aria-label="{{ l.label }}">{% icon l.icon 16 %}</a>{% endfor %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-foot">
+    <span class="muted">{% t "results_count" total %}</span>
+    {% if is_paginated %}
+    <div class="pager">
+      {% if page_obj.has_previous %}<a class="btn btn-ghost btn-sm" href="{% qs page=page_obj.previous_page_number %}">{% t "previous" %}</a>{% endif %}
+      <span class="muted">{% t "page_x_of_y" page_obj.number paginator.num_pages %}</span>
+      {% if page_obj.has_next %}<a class="btn btn-ghost btn-sm" href="{% qs page=page_obj.next_page_number %}">{% t "next" %}</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty">
+    {% icon "search" 28 %}
+    <strong>{% t "no_results" %}</strong>
+    <p class="muted">{% t "no_results_hint" %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

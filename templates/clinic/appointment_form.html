@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ request.branch.name }}</p>
+  </div>
+</div>
+
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+
+  <section class="form-section">
+    <h2>{% t "patient" %}</h2>
+    <div class="patient-picker{% if form.patient.errors %} has-error{% endif %}" data-patient-picker
+         data-search-url="{% url 'patient_search' %}" data-new-url="{% url 'patient_create' %}?then=book">
+      {{ form.patient }}
+      <div class="picked" data-picked {% if not patient %}hidden{% endif %}>
+        <span class="avatar">{% icon "user" 18 %}</span>
+        <div>
+          <strong data-picked-name>{{ patient.full_name }}</strong>
+          <small><span class="num" data-picked-phone>{{ patient.phone }}</span> · <code data-picked-file>{{ patient.file_no }}</code></small>
+          <small class="error" data-picked-allergy {% if not patient.allergies %}hidden{% endif %}>{% icon "alert" 14 %} {% t "allergy_alert" %}: <span>{{ patient.allergies }}</span></small>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" data-picker-change>{% t "change" %}</button>
+      </div>
+      <div class="picker-search" data-picker-search {% if patient %}hidden{% endif %}>
+        <label class="search search-lg">{% icon "search" 18 %}<input type="search" autocomplete="off" placeholder="{% t 'search_patient' %}" data-picker-input aria-label="{% t 'search_patient' %}"></label>
+        <ul class="picker-results" data-picker-results role="listbox"></ul>
+        <p class="muted picker-empty" data-picker-empty hidden>{% t "no_patient_found" %}</p>
+        {% if user|can:"patients.edit" %}<a class="btn btn-ghost btn-sm" data-picker-new href="{% url 'patient_create' %}?then=book">{% icon "plus" 16 %}<span>{% t "new_patient" %}</span></a>{% endif %}
+      </div>
+      {% for e in form.patient.errors %}<small class="error">{{ e }}</small>{% endfor %}
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2>{% t "appointment_details" %}</h2>
+    <div class="form-grid">{% for field in fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn-primary">{% t "save" %}</button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{{ service_durations|json_script:"service-durations" }}
+{% endblock %}

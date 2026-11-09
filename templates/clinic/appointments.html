@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% t "nav_appointments" %}</h1>
+    <p class="muted">{{ request.branch.name }}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% url 'appointment_calendar' %}?date={{ day|date:'Y-m-d' }}{% if chosen_doctor %}&doctor={{ chosen_doctor }}{% endif %}">{% icon "calendar" 18 %}<span>{% t "calendar" %}</span></a>
+    <a class="btn btn-ghost" href="{% url 'queue_screen' %}" target="_blank" rel="noopener">{% icon "tv" 18 %}<span>{% t "queue_screen" %}</span></a>
+    {% if can_book %}<a class="btn btn-primary" href="{% url 'appointment_create' %}?date={{ day|date:'Y-m-d' }}">{% icon "plus" 18 %}<span>{% t "book" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="toolbar">
+    {% include "clinic/_day_nav.html" %}
+  </div>
+  <form class="toolbar" method="get">
+    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+    <input type="hidden" name="status" value="{{ status }}">
+    <label class="search">{% icon "search" 18 %}<input type="search" name="q" value="{{ q }}" placeholder="{% t 'search_patient' %}" aria-label="{% t 'search' %}"></label>
+    <select name="doctor" class="input select" data-autosubmit aria-label="{% t 'doctor' %}">
+      <option value="">{% t "all_doctors" %}</option>
+      {% for d in doctors %}<option value="{{ d.pk }}"{% if chosen_doctor == d.pk|stringformat:"s" %} selected{% endif %}>{{ d }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-ghost">{% t "search" %}</button>
+  </form>
+  <nav class="tabs" aria-label="{% t 'status' %}">
+    {% for tab in tabs %}
+    <a href="{% qs status=tab.key %}" class="{% if status == tab.key %}is-on{% endif %}">{{ tab.label }} <span class="tab-n num">{{ tab.n }}</span></a>
+    {% endfor %}
+  </nav>
+  {% include "clinic/_appt_table.html" with items=appointments %}
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% load ui %}
+{% if items %}
+<div class="table-wrap">
+  <table class="table appt-table">
+    <thead>
+      <tr>
+        <th>{% if show_date %}{% t "date" %}{% else %}{% t "time" %}{% endif %}</th>
+        {% if not hide_patient %}<th>{% t "patient" %}</th>{% endif %}
+        <th>{% t "doctor" %} / {% t "service" %}</th>
+        <th>{% t "status" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in items %}
+      <tr class="status-{{ a.status }}">
+        <td data-label="{% if show_date %}{% t 'date' %}{% else %}{% t 'time' %}{% endif %}" class="cell-when">
+          <div class="when">
+            {% if a.queue_number and not show_date %}<span class="queue-chip num" title="{% t 'queue_no' %}">{{ a.queue_number }}</span>{% endif %}
+            <div>
+              {% if show_date %}<span class="num">{{ a.local_start|date:"Y-m-d" }}</span><br>{% endif %}
+              <strong class="num">{{ a.local_start|time:"H:i" }}</strong>
+              <small class="num">{{ a.local_end|time:"H:i" }}</small>
+            </div>
+          </div>
+        </td>
+        {% if not hide_patient %}
+        <td class="cell-title" data-label="{% t 'patient' %}">
+          <a href="{% url 'patient_detail' a.patient_id %}"><strong>{{ a.patient.full_name }}</strong></a>
+          <small><span class="num">{{ a.patient.phone }}</span> · <code>{{ a.patient.file_no }}</code></small>
+          {% if a.patient.allergies %}<small class="error">{% icon "alert" 14 %} {{ a.patient.allergies|truncatechars:50 }}</small>{% endif %}
+        </td>
+        {% endif %}
+        <td data-label="{% t 'doctor' %}">
+          <span class="nowrap"><span class="dot" style="--c: {{ a.doctor.color }}"></span>{{ a.doctor }}</span>
+          <small>{{ a.service.name|default:"—" }}</small>
+          {% if a.notes %}<small class="muted">{{ a.notes|truncatechars:60 }}</small>{% endif %}
+        </td>
+        <td data-label="{% t 'status' %}" class="cell-status">
+          <span class="badge {{ a.status_class }}">{{ a.get_status_display }}</span>
+          {% if a.cancel_reason %}<small>{{ a.cancel_reason }}</small>{% endif %}
+          <div class="appt-actions">
+            {% for act in a.actions %}
+            <form method="post" action="{% url 'appointment_action' a.pk act.key %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="btn btn-sm act-{{ act.key }}" title="{{ act.label }}" aria-label="{{ act.label }}">{% icon act.icon 16 %}{% if act.primary %}<span>{{ act.label }}</span>{% endif %}</button>
+            </form>
+            {% endfor %}
+            {% if user|can:"appointments.edit" and a.status != "completed" %}
+            <a class="btn btn-ghost btn-sm" href="{% url 'appointment_edit' a.pk %}" title="{% t 'edit' %}" aria-label="{% t 'edit' %}">{% icon "edit" 16 %}</a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty empty-sm"><span class="muted">{% t "no_appointments" %}</span></div>
+{% endif %}

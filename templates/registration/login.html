@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{% t "login_title" %}{% endblock %}
+{% block body %}
+<div class="login-page">
+  <div class="login-card card">
+    <div class="brand brand-login">
+      <span class="brand-mark">{% icon "tooth" 26 %}</span>
+      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{% t "app_tagline" %}</small></div>
+    </div>
+    <h1>{% t "login_title" %}</h1>
+    <p class="muted">{% t "login_sub" %}</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+      {% for field in form.visible_fields %}
+      <div class="field{% if field.errors %} has-error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for e in field.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </div>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary btn-block">{% t "sign_in" %}</button>
+    </form>
+    <form method="post" action="{% url 'set_language' %}" class="login-lang">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <input type="hidden" name="language" value="{% if lang == 'ar' %}en{% else %}ar{% endif %}">
+      <button class="btn btn-ghost btn-sm">{% icon "globe" 16 %}<span>{% t "switch_lang" %}</span></button>
+    </form>
+  </div>
+</div>
+{% endblock %}

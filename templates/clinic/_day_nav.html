@@ -1,0 +1,11 @@
+{% load ui %}
+<div class="day-nav">
+  <a class="btn btn-ghost btn-sm" href="{{ prev_url }}" aria-label="{% t 'previous' %}">{% icon "chevron-start" 16 %}</a>
+  <form method="get" class="day-pick">
+    {% for k, v in request.GET.items %}{% if k != "date" %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}
+    <input type="date" name="date" value="{{ day|date:'Y-m-d' }}" class="input" data-autosubmit aria-label="{% t 'date' %}">
+  </form>
+  <a class="btn btn-ghost btn-sm" href="{{ next_url }}" aria-label="{% t 'next' %}">{% icon "chevron-end" 16 %}</a>
+  {% if not is_today %}<a class="btn btn-ghost btn-sm" href="{{ today_url }}">{% t "today" %}</a>{% endif %}
+  <strong class="day-label">{{ day|date:"l j F Y" }}</strong>
+</div>

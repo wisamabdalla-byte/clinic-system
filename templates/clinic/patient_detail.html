@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'patient_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_patients" %}</a>
+    <h1>{{ object.full_name }}{% if not object.is_active %} <span class="badge badge-muted">{% t "inactive" %}</span>{% endif %}</h1>
+    <p class="muted"><code>{{ object.file_no }}</code> · {{ object.get_gender_display }}{% if object.age is not None %} · <span class="num">{{ object.age }}</span> {% t "years" %}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    {% if can_edit %}<a class="btn btn-ghost" href="{% url 'patient_edit' object.pk %}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>{% endif %}
+    {% if can_book %}<a class="btn btn-primary" href="{% url 'patient_book' object.pk %}">{% icon "calendar" 18 %}<span>{% t "book" %}</span></a>{% endif %}
+  </div>
+</div>
+
+{% if object.allergies %}
+<div class="alert alert-error alert-strong">{% icon "alert" 18 %}<div><strong>{% t "allergy_alert" %}:</strong> {{ object.allergies }}</div></div>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "contact" %}</h2>
+    <ul class="kv">
+      <li><span>{% t "phone" %}</span><a class="num" href="tel:{{ object.phone }}">{{ object.phone }}</a></li>
+      {% if object.phone2 %}<li><span>{% t "phone2" %}</span><a class="num" href="tel:{{ object.phone2 }}">{{ object.phone2 }}</a></li>{% endif %}
+      {% if object.email %}<li><span>{% t "email" %}</span><span dir="ltr">{{ object.email }}</span></li>{% endif %}
+      {% if object.national_id %}<li><span>{% t "national_id" %}</span><span class="num">{{ object.national_id }}</span></li>{% endif %}
+      {% if object.address %}<li><span>{% t "address" %}</span><span>{{ object.address }}</span></li>{% endif %}
+      {% if object.date_of_birth %}<li><span>{% t "date_of_birth" %}</span><span class="num">{{ object.date_of_birth|date:"Y-m-d" }}</span></li>{% endif %}
+      {% if object.branch %}<li><span>{% t "home_branch" %}</span><span>{{ object.branch.name }}</span></li>{% endif %}
+      {% if object.source %}<li><span>{% t "source" %}</span><span>{{ object.get_source_display }}</span></li>{% endif %}
+      <li><span>{% t "registered" %}</span><span class="num">{{ object.created_at|date:"Y-m-d" }}</span></li>
+    </ul>
+  </section>
+  <section class="card pad">
+    <h2>{% t "patient_medical" %}</h2>
+    <ul class="kv">
+      <li><span>{% t "visits" %}</span><strong class="num">{{ visits }}</strong></li>
+      <li><span>{% t "patient_price_list" %}</span><span>{% if object.price_list %}<span class="badge badge-accent">{{ object.price_list.name }}</span>{% else %}{% t "default_price_list" %}{% endif %}</span></li>
+      {% if object.insurance_no %}<li><span>{% t "insurance_no" %}</span><span class="num">{{ object.insurance_no }}</span></li>{% endif %}
+    </ul>
+    {% if object.chronic_conditions %}<h3>{% t "chronic_conditions" %}</h3><p class="pre">{{ object.chronic_conditions }}</p>{% endif %}
+    {% if object.notes %}<h3>{% t "notes" %}</h3><p class="pre">{{ object.notes }}</p>{% endif %}
+  </section>
+</div>
+
+{% if can_see_appts %}
+<section class="card">
+  <h2 class="pad pad-b0">{% t "upcoming" %}</h2>
+  {% include "clinic/_appt_table.html" with items=upcoming show_date=True %}
+</section>
+<section class="card">
+  <h2 class="pad pad-b0">{% t "history" %}</h2>
+  {% include "clinic/_appt_table.html" with items=history show_date=True %}
+</section>
+{% endif %}
+{% endblock %}

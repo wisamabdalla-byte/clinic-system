@@ -1,0 +1,40 @@
+# Render "Blueprint": creates the website and its database in one go.
+# Render reads this file when you choose New > Blueprint and pick this repository.
+databases:
+  - name: clinic-db
+    plan: free            # change to a paid plan before storing real patient data (backups)
+    databaseName: clinic
+    user: clinic
+
+services:
+  - type: web
+    name: clinic
+    runtime: python
+    plan: free            # free plan sleeps when unused; use a paid plan for daily clinic work
+    buildCommand: bash build.sh
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clinic-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: DJANGO_ADMIN_USERNAME
+        sync: false        # Render asks you for this when you create the Blueprint
+      - key: DJANGO_ADMIN_PASSWORD
+        sync: false        # Render asks you for this when you create the Blueprint
+      - key: CLINIC_CURRENCY_AR
+        value: "د.ل"
+      - key: CLINIC_CURRENCY_EN
+        value: "LYD"
+      - key: CLINIC_TIME_ZONE
+        value: "Africa/Tripoli"

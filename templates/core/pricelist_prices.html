@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ help }}</p>
+  </div>
+</div>
+
+<form method="post" class="card" novalidate>
+  {% csrf_token %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>{% t "service" %}</th>
+          <th>{% t "base_price" %}</th>
+          <th>{% t "special_price" %}</th>
+          <th>{% t "effective_price" %}</th>
+        </tr>
+      </thead>
+      {% for dept, rows in groups %}
+      <tbody>
+        <tr class="group-row"><th colspan="4">{{ dept }}</th></tr>
+        {% for r in rows %}
+        <tr>
+          <td class="cell-title" data-label="{% t 'service' %}"><strong>{{ r.service.name }}</strong><small><code>{{ r.service.code }}</code> · {{ r.service.category.name }}</small></td>
+          <td class="cell-money" data-label="{% t 'base_price' %}"><span class="num">{{ r.service.price|money }}</span> <small class="cur">{{ currency }}</small></td>
+          <td data-label="{% t 'special_price' %}">
+            <input class="input input-price" name="price_{{ r.service.pk }}" value="{{ r.value }}" inputmode="decimal" dir="ltr" placeholder="—" aria-label="{% t 'special_price' %}: {{ r.service.name }}">
+          </td>
+          <td class="cell-money" data-label="{% t 'effective_price' %}"><span class="num">{{ r.effective|money }}</span> <small class="cur">{{ currency }}</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="form-actions pad">
+    <button class="btn btn-primary">{% t "save" %}</button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

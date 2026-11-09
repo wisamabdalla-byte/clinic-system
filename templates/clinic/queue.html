@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block body %}
+<div class="queue" data-queue data-url="{% url 'queue_data' %}"
+     data-now-label="{% t 'now_serving' %}" data-wait-label="{% t 'waiting' %}" data-none-label="{% t 'no_waiting' %}">
+  <header class="queue-head">
+    <div class="brand brand-login">
+      <span class="brand-mark">{% icon "tooth" 26 %}</span>
+      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{{ request.branch.name }}</small></div>
+    </div>
+    <div class="queue-clock num" data-queue-clock></div>
+    <button type="button" class="btn btn-ghost btn-sm queue-fs" data-fullscreen>{% icon "expand" 16 %}<span>{% t "fullscreen" %}</span></button>
+  </header>
+  <main class="queue-grid" data-queue-grid>
+    {% for d in doctors %}
+    <section class="queue-card" style="--c: {{ d.color }}">
+      <h2>{{ d.doctor }}</h2>
+      <div class="queue-now">
+        <span class="queue-label">{% t "now_serving" %}</span>
+        {% for p in d.now %}<div class="queue-big"><span class="num">{{ p.n }}</span><small>{{ p.name }}</small></div>{% empty %}<div class="queue-big is-empty">—</div>{% endfor %}
+      </div>
+      <div class="queue-wait">
+        <span class="queue-label">{% t "waiting" %}</span>
+        <ol>{% for p in d.waiting %}<li><span class="num">{{ p.n }}</span> {{ p.name }}</li>{% empty %}<li class="muted">{% t "no_waiting" %}</li>{% endfor %}</ol>
+      </div>
+    </section>
+    {% empty %}
+    <p class="queue-empty">{% t "queue_empty" %}</p>
+    {% endfor %}
+  </main>
+  <footer class="queue-foot muted">{% t "queue_hint" %} · <a href="{% url 'appointment_list' %}">{% t "nav_appointments" %}</a></footer>
+</div>
+<template data-queue-empty>{% t "queue_empty" %}</template>
+{% endblock %}

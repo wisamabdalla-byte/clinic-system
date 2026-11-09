@@ -1,0 +1,83 @@
+{% load static ui %}<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ title|default:"" }}{% endblock %} · {{ clinic_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=6">
+</head>
+<body>
+{% block body %}
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">{% icon "tooth" 22 %}</span>
+      <div class="brand-text"><strong>{{ clinic_name }}</strong><small>{% t "app_tagline" %}</small></div>
+    </div>
+    <nav class="nav">
+      {% for item in nav %}
+        {% if item.section %}
+          <div class="nav-section">{{ item.section }}</div>
+        {% elif item.soon %}
+          <span class="nav-item is-soon" aria-disabled="true">{% icon item.icon %}<span>{{ item.label }}</span><em>{% t "soon" %}</em></span>
+        {% else %}
+          <a class="nav-item{% if item.active %} is-active{% endif %}" href="{% url item.url %}"{% if item.active %} aria-current="page"{% endif %}>{% icon item.icon %}<span>{{ item.label }}</span></a>
+        {% endif %}
+      {% endfor %}
+    </nav>
+  </aside>
+  <div class="scrim" data-close-sidebar></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button type="button" class="icon-btn only-mobile" data-toggle-sidebar aria-label="{% t 'menu' %}">{% icon "menu" %}</button>
+      {% if request.branches %}
+      <form method="post" action="{% url 'switch_branch' %}" class="branch-switch">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% icon "building" 18 %}
+        <select name="branch" data-autosubmit aria-label="{% t 'branch' %}">
+          {% for b in request.branches %}<option value="{{ b.pk }}"{% if b.pk == request.branch.pk %} selected{% endif %}>{{ b.name }}</option>{% endfor %}
+        </select>
+      </form>
+      {% endif %}
+      <div class="topbar-end">
+        <form method="post" action="{% url 'set_language' %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <input type="hidden" name="language" value="{% if lang == 'ar' %}en{% else %}ar{% endif %}">
+          <button class="btn btn-ghost btn-sm" lang="{% if lang == 'ar' %}en{% else %}ar{% endif %}">{% icon "globe" 18 %}<span>{% t "switch_lang" %}</span></button>
+        </form>
+        <details class="usermenu">
+          {% firstof user.first_name user.username as display_name %}
+          <summary>
+            <span class="avatar">{{ display_name|first|upper }}</span>
+            <span class="usermenu-name"><strong>{{ user }}</strong><small>{{ user.get_role_display }}</small></span>
+          </summary>
+          <div class="usermenu-panel">
+            <a href="{% url 'password_change' %}">{% icon "key" 18 %}<span>{% t "change_password" %}</span></a>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>{% icon "logout" 18 %}<span>{% t "logout" %}</span></button></form>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main class="content">
+      {% if messages %}
+      <div class="toasts" role="status">
+        {% for m in messages %}<div class="toast toast-{{ m.tags }}">{{ m }}</div>{% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}
+<script src="{% static 'js/app.js' %}?v=2"></script>
+<script src="{% static 'js/clinic.js' %}?v=2"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
