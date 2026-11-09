@@ -6,16 +6,16 @@
   --border: #e3e8ec;
   --text: #17212b;
   --muted: #64717e;
-  --primary: #0f766e;
+  --primary: #1587d0;
   --primary-ink: #ffffff;
-  --primary-soft: #e3f3f1;
+  --primary-soft: #e6f2fb;
   --accent: #b45309;
   --accent-soft: #fdf1e3;
   --good: #15803d;
   --good-soft: #e6f4ea;
   --danger: #b42318;
   --danger-soft: #fdecea;
-  --sidebar: #0e2a2f;
+  --sidebar: #0b2639;
   --sidebar-text: #c9d6d8;
   --sidebar-muted: #7d9397;
   --radius: 10px;
@@ -196,7 +196,7 @@ input[type="color"].input { padding: .2rem; width: 80px; }
 .stage-label { flex: 1; }
 
 /* ---------- login ---------- */
-.login-page { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem 1rem; background: linear-gradient(160deg, #0e2a2f 0%, #0f766e 100%); }
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem 1rem; background: linear-gradient(160deg, var(--sidebar) 0%, var(--primary) 100%); }
 .login-card { width: 100%; max-width: 400px; padding: 2rem; display: flex; flex-direction: column; gap: .4rem; }
 .login-card form { display: flex; flex-direction: column; gap: 1rem; margin-block-start: 1rem; }
 .login-card p { margin: 0; }
@@ -319,7 +319,7 @@ h3 { font-size: .9rem; margin: 1rem 0 .25rem; color: var(--muted); font-weight: 
 [hidden] { display: none !important; }
 
 /* queue screen (TV) */
-.queue { min-height: 100vh; display: flex; flex-direction: column; background: #0e2a2f; color: #fff; padding: 1.5rem 2rem; gap: 1.5rem; }
+.queue { min-height: 100vh; display: flex; flex-direction: column; background: var(--sidebar); color: #fff; padding: 1.5rem 2rem; gap: 1.5rem; }
 .queue-head { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
 .queue-head .brand { padding: 0; }
 .queue-head .brand-text strong { color: #fff; font-size: 1.3rem; }
@@ -368,8 +368,8 @@ h3 { font-size: .9rem; margin: 1rem 0 .25rem; color: var(--muted); font-weight: 
 .inline-form .input { flex: 1 1 240px; width: auto; }
 .pay-form { border-block-start: 1px solid var(--border); }
 .pay-form h3 { margin-block-start: 0; }
-.brand-mark.has-logo { background: #fff; padding: 3px; overflow: hidden; }
-.brand-mark.has-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 7px; }
+.brand-mark.has-logo { background: #fff; padding: 0; overflow: hidden; }
+.brand-mark.has-logo img { width: 100%; height: 100%; object-fit: cover; }
 .brand-preview { background: var(--sidebar); border-radius: var(--radius); max-width: 360px; }
 .field-wide-wrap { display: contents; }
 .field-wide-wrap > .field { grid-column: 1 / -1; }

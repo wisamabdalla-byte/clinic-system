@@ -128,8 +128,12 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Clinic branding and money
-CLINIC_NAME_AR = os.environ.get("CLINIC_NAME_AR", "مركز الأسنان والجلدية")
-CLINIC_NAME_EN = os.environ.get("CLINIC_NAME_EN", "Dental & Derma Center")
+CLINIC_NAME_AR = os.environ.get("CLINIC_NAME_AR", "دار البيان")
+CLINIC_NAME_EN = os.environ.get("CLINIC_NAME_EN", "Dar Albaian")
+CLINIC_TAGLINE_AR = os.environ.get("CLINIC_TAGLINE_AR", "مركز طب الأسنان والجلدية")
+CLINIC_TAGLINE_EN = os.environ.get("CLINIC_TAGLINE_EN", "Dental & Dermatology Center")
+CLINIC_PRIMARY_COLOR = "#1587d0"  # from the logo; the admin can change it on the Clinic branding page
+CLINIC_DEFAULT_LOGO = "img/logo.png"  # static file, used until a logo is uploaded
 # Libyan dinar by default: "د.ل" in Arabic, "LYD" in English
 CLINIC_CURRENCY_AR = os.environ.get("CLINIC_CURRENCY_AR", "د.ل")
 CLINIC_CURRENCY_EN = os.environ.get("CLINIC_CURRENCY_EN", "LYD")

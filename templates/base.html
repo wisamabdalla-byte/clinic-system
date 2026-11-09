@@ -7,9 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=8">
-  {% if clinic.primary_color and clinic.primary_color != "#0f766e" %}<style>:root { --primary: {{ clinic.primary_color }}; --primary-soft: color-mix(in srgb, {{ clinic.primary_color }} 12%, white); --sidebar: color-mix(in srgb, {{ clinic.primary_color }} 30%, #071417); }</style>{% endif %}
-  {% if clinic.logo %}<link rel="icon" href="{{ clinic.logo }}">{% endif %}
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=9">
+  {% if clinic.primary_color %}<style>:root { --primary: {{ clinic.primary_color }}; --primary-soft: color-mix(in srgb, {{ clinic.primary_color }} 12%, white); --sidebar: color-mix(in srgb, {{ clinic.primary_color }} 30%, #071417); }</style>{% endif %}
+  <link rel="icon" href="{% if clinic.logo %}{{ clinic.logo }}{% else %}{% static default_logo %}{% endif %}">
 </head>
 <body>
 {% block body %}

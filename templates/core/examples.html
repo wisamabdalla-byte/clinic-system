@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "examples_sub" %}</p>
+  </div>
+</div>
+
+{% if total %}
+<section class="card pad">
+  <h2>{% t "examples_current" %} — <span class="num">{{ total }}</span> {% t "records" %}</h2>
+  <ul class="kv">{% for r in rows %}<li><span>{{ r.label }}</span><strong class="num">{{ r.n }}</strong></li>{% endfor %}</ul>
+  <p class="muted small">{% t "examples_note" %}</p>
+  <form method="post" data-confirm="{% t 'examples_confirm' %}" class="form-actions">
+    {% csrf_token %}
+    <button class="btn btn-ghost danger-text" name="do" value="erase">{% icon "trash" 18 %}<span>{% t "examples_erase" %}</span></button>
+  </form>
+</section>
+{% else %}
+<section class="card pad">
+  <h2>{% t "examples_what" %}</h2>
+  <p>{% t "examples_list" %}</p>
+  <p class="muted small">{% t "examples_note" %}</p>
+  <form method="post" class="form-actions">
+    {% csrf_token %}
+    <button class="btn btn-primary" name="do" value="load">{% icon "sparkle" 18 %}<span>{% t "examples_load" %}</span></button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

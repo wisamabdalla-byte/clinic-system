@@ -1,1 +1,1 @@
-{% load ui %}{% if clinic.logo %}<span class="brand-mark has-logo"><img src="{{ clinic.logo }}" alt=""></span>{% else %}<span class="brand-mark">{% icon "tooth" size|default:22 %}</span>{% endif %}
+{% load static %}<span class="brand-mark has-logo"><img src="{% if clinic.logo %}{{ clinic.logo }}{% else %}{% static default_logo %}{% endif %}" alt=""></span>

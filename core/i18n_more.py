@@ -254,6 +254,26 @@ MORE = {
     "photo_too_big": ("الصورة أكبر من 3 ميغابايت.", "The photo is larger than 3 MB."),
     "image_type_error": ("الملف يجب أن يكون صورة JPG أو PNG أو WebP.", "The file must be a JPG, PNG or WebP image."),
 
+    # ---------------- example data
+    "nav_examples": ("بيانات تجريبية", "Example data"),
+    "examples_sub": ("أضف أمثلة لكل وظائف النظام لتجربتها وتدريب الموظفين، ثم امسحها بضغطة واحدة قبل بدء العمل الفعلي.", "Add examples for every part of the system to try it and train staff, then erase them in one click before real work starts."),
+    "examples_none": ("لا توجد بيانات تجريبية الآن.", "No example data at the moment."),
+    "examples_what": ("ما الذي سيُضاف", "What will be added"),
+    "examples_list": ("٣ أطباء بنسب مختلفة، ٦ مرضى، خدمات أسنان وجلدية، قائمة أسعار تأمين وباقة، حجوزات اليوم بكل الحالات، فواتير مدفوعة كاملة وجزئياً وغير مدفوعة، شهر سابق مُقفل لطبيب مع صرف جزء من مستحقاته، مصروفات، ملاحظات طبية، مخطط أسنان، وصفة طبية، خطة علاج، وصور قبل/بعد.", "3 doctors with different %, 6 patients, dental and skin services, an insurance price list and a package, today's bookings in every status, invoices paid in full / part paid / unpaid, last month closed for one doctor with part paid out, expenses, clinical notes, a tooth chart, a prescription, a treatment plan and before/after photos."),
+    "examples_note": ("كل الأمثلة تنتهي أسماؤها بـ \"(مثال)\". المسح يحذف الأمثلة فقط، ولا يلمس أي بيانات أدخلها الموظفون.", "Every example name ends with \"(مثال)\". Erasing removes only the examples and never touches data your staff entered."),
+    "examples_load": ("إضافة البيانات التجريبية", "Add example data"),
+    "examples_erase": ("مسح كل البيانات التجريبية", "Erase all example data"),
+    "examples_confirm": ("مسح كل البيانات التجريبية نهائياً؟", "Permanently erase all example data?"),
+    "examples_loaded": ("تمت إضافة {0} سجلاً تجريبياً.", "{0} example records added."),
+    "examples_erased": ("تم مسح {0} سجلاً تجريبياً.", "{0} example records erased."),
+    "examples_kept": ("بقي {0} سجلاً لأن بيانات حقيقية مرتبطة بها (مثل فاتورة حقيقية لمريض تجريبي).", "{0} records were kept because real data is linked to them (e.g. a real invoice for an example patient)."),
+    "examples_already": ("البيانات التجريبية موجودة بالفعل.", "Example data is already loaded."),
+    "examples_current": ("البيانات التجريبية الموجودة", "Example data loaded now"),
+    "records": ("سجل", "records"),
+    "ex_doctors": ("أطباء", "Doctors"),
+    "ex_settlements": ("أشهر مُقفلة", "Closed months"),
+    "special_prices": ("أسعار خاصة", "Special prices"),
+
     # ---------------- branding
     "brand_names": ("الاسم", "Name"),
     "brand_look": ("الشعار واللون", "Logo and colour"),

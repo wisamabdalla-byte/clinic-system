@@ -447,3 +447,55 @@ class ClinicSettings(CrudFormMixin, UpdateView):
             {"title": tr("brand_print"), "fields": [form[f] for f in ("phone", "address", "invoice_footer")]},
         ]
         return ctx
+
+
+# ---------------------------------------------------------------- example data (try the system, then erase)
+EXAMPLE_LABELS = {
+    "core.branch": "nav_branches", "core.paymentmethod": "nav_payment_methods", "core.servicecategory": "nav_categories",
+    "core.service": "nav_services", "core.pricelist": "nav_pricelists", "core.pricelistitem": "special_prices",
+    "core.package": "nav_packages", "accounts.user": "ex_doctors", "clinic.patient": "nav_patients",
+    "clinic.appointment": "nav_appointments", "finance.invoice": "nav_invoices", "finance.payment": "payments",
+    "finance.doctorsettlement": "ex_settlements", "finance.doctorpayout": "nav_payouts", "finance.expense": "nav_expenses",
+    "records.clinicalnote": "tab_notes", "records.toothrecord": "tab_teeth", "records.prescription": "tab_rx",
+    "records.treatmentplan": "tab_plans", "records.patientphoto": "tab_photos",
+}
+
+
+class ExamplesView(PermissionMixin, TemplateView):
+    module = "settings"
+    template_name = "core/examples.html"
+
+    def get_context_data(self, **kwargs):
+        from .examples import example_counts
+
+        ctx = super().get_context_data(**kwargs)
+        from django.apps import apps
+
+        counts = example_counts()
+        rows = []
+        for label, n in counts.items():
+            model = apps.get_model(label)
+            key = EXAMPLE_LABELS.get(label)
+            rows.append({"label": tr(key) if key else str(model._meta.verbose_name_plural), "key": label, "n": n})
+        ctx.update(title=tr("nav_examples"), rows=sorted(rows, key=lambda r: r["key"]), total=sum(counts.values()))
+        return ctx
+
+    def post(self, request):
+        from .examples import erase_examples, has_examples, load_examples
+
+        if not has_perm(request.user, "settings", "edit"):
+            return forbidden(request)
+        if request.POST.get("do") == "load":
+            if has_examples():
+                messages.error(request, tr("examples_already"))
+            else:
+                n = load_examples(request.branch, request.user)
+                log(request, "create", None, [f"examples loaded ({n})"])
+                messages.success(request, tr("examples_loaded", n))
+        elif request.POST.get("do") == "erase":
+            deleted, kept = erase_examples()
+            log(request, "update", None, [f"examples erased ({deleted}, kept {kept})"])
+            messages.success(request, tr("examples_erased", deleted))
+            if kept:
+                messages.error(request, tr("examples_kept", kept))
+        return redirect("examples")

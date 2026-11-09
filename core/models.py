@@ -189,7 +189,7 @@ class ClinicProfile(models.Model):
     tagline_en = models.CharField(max_length=150, blank=True)
     phone = models.CharField(max_length=60, blank=True)
     address = models.CharField(max_length=255, blank=True)
-    primary_color = models.CharField(max_length=7, default="#0f766e")
+    primary_color = models.CharField(max_length=7, default="#1587d0")
     logo = models.TextField(blank=True, editable=False)  # data: URI, kept in the database
     invoice_footer = models.TextField(blank=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -222,4 +222,17 @@ class ClinicProfile(models.Model):
         return self.name_ar or settings.CLINIC_NAME_AR
 
     def display_tagline(self, lang):
-        return (self.tagline_en if lang == "en" else self.tagline_ar) or ""
+        if lang == "en":
+            return self.tagline_en or settings.CLINIC_TAGLINE_EN
+        return self.tagline_ar or settings.CLINIC_TAGLINE_AR
+
+
+class ExampleItem(models.Model):
+    """A record created by "Load examples", so "Erase examples" removes exactly those and nothing else."""
+
+    model_label = models.CharField(max_length=60)  # e.g. "clinic.patient"
+    object_id = models.CharField(max_length=40)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["id"]
