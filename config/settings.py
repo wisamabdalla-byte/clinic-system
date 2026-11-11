@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "clinic",
     "finance",
     "records",
+    "ledger",
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "ledger.middleware.LedgerMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.BranchMiddleware",
 ]
@@ -90,6 +92,13 @@ DATABASES = {
         conn_max_age=600,
     )
 }
+# Every request is one transaction: if an accounting rule fails half-way (unbalanced entry,
+# closed period, ...) nothing of that request is saved.
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
+# Largest attachment (scanned invoice, receipt) accepted on financial documents.
+LEDGER_MAX_ATTACHMENT = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 60 * 1024 * 1024  # backup restore uploads
 
 AUTH_USER_MODEL = "accounts.User"
 

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'journal_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_journal" %}</a>
+    <h1>{% t "journal_entry" %} <code>{{ e.number }}</code> <span class="badge {{ badge }}">{{ e.get_status_display }}</span>{% if e.is_reversed %} <span class="badge badge-bad">{% t "reversed" %}</span>{% endif %}</h1>
+    <p class="muted"><span class="num">{{ e.date|date:"Y-m-d" }}</span> · {{ e.get_kind_display }}{% if e.branch %} · {{ e.branch.name }}{% endif %} · {% t "period" %} {{ e.period }}{% if e.period.is_closed %} ({% t "closed" %}){% endif %}</p>
+  </div>
+  <div class="page-actions actions-bar">
+    {% if can.edit %}<a class="btn btn-ghost" href="{% url 'journal_edit' e.pk %}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>{% endif %}
+    {% if can.review %}<form method="post" action="{% url 'journal_action' e.pk %}">{% csrf_token %}<input type="hidden" name="do" value="review"><button class="btn btn-ghost">{% icon "check" 18 %}<span>{% t "do_review" %}</span></button></form>{% endif %}
+    {% if can.approve %}<form method="post" action="{% url 'journal_action' e.pk %}">{% csrf_token %}<input type="hidden" name="do" value="approve"><button class="btn btn-ghost">{% icon "check-circle" 18 %}<span>{% t "do_approve" %}</span></button></form>{% endif %}
+    {% if can.post %}<form method="post" action="{% url 'journal_action' e.pk %}" data-confirm="{% t 'confirm_post' %}">{% csrf_token %}<input type="hidden" name="do" value="post"><button class="btn btn-primary">{% icon "lock" 18 %}<span>{% t "do_post" %}</span></button></form>{% endif %}
+    {% if can.give_back %}
+    <details class="action-more"><summary class="btn btn-ghost">{% icon "undo" 18 %}<span>{% t "do_return" %}</span></summary>
+      <form method="post" action="{% url 'journal_action' e.pk %}" class="action-panel">{% csrf_token %}<input type="hidden" name="do" value="return">
+        <label class="field-label">{% t "return_reason" %}</label><input class="input" name="note" maxlength="255" required>
+        <button class="btn btn-primary btn-sm">{% t "do_return" %}</button></form>
+    </details>
+    {% endif %}
+    {% if can.reverse %}
+    <details class="action-more"><summary class="btn btn-ghost">{% icon "repeat" 18 %}<span>{% t "do_reverse" %}</span></summary>
+      <form method="post" action="{% url 'journal_action' e.pk %}" class="action-panel" data-confirm="{% t 'confirm_reverse' %}">{% csrf_token %}
+        <p class="muted small mt-0">{% t "reverse_help" %}</p>
+        <label class="field-label">{% t "reversal_date" %}</label><input class="input" type="date" name="date" value="{{ e.date|date:'Y-m-d' }}">
+        <label class="field-label">{% t "reason" %}</label><input class="input" name="note" maxlength="255" required>
+        <div class="gap"><button class="btn btn-primary btn-sm" name="do" value="reverse">{% t "do_reverse" %}</button>
+        {% if can.copy %}<button class="btn btn-ghost btn-sm" name="do" value="correct">{% t "do_reverse_correct" %}</button>{% endif %}</div>
+      </form>
+    </details>
+    {% endif %}
+    {% if can.copy %}<a class="btn btn-ghost" href="{% url 'journal_create' %}?copy={{ e.pk }}" title="{% t 'copy_entry' %}">{% icon "file" 18 %}<span>{% t "copy_entry" %}</span></a>{% endif %}
+    {% if can.delete %}<form method="post" action="{% url 'journal_action' e.pk %}" data-confirm="{% t 'confirm_delete_draft' %}">{% csrf_token %}<input type="hidden" name="do" value="delete"><button class="btn btn-ghost">{% icon "trash" 18 %}<span>{% t "delete" %}</span></button></form>{% endif %}
+  </div>
+</div>
+
+{% if e.status != "posted" %}<div class="alert alert-warn">{% t "not_posted_warning" %}</div>{% endif %}
+{% if e.return_note %}<div class="alert alert-warn">{% t "returned_note" %}: {{ e.return_note }}</div>{% endif %}
+{% if e.kind == "reversal" and e.reversal_of %}<div class="alert alert-warn">{% t "this_reverses" %} <a href="{% url 'journal_detail' e.reversal_of.pk %}"><code>{{ e.reversal_of.number }}</code></a></div>{% endif %}
+{% if reversed_by %}<div class="alert alert-error">{% t "reversed_by" %} <a href="{% url 'journal_detail' reversed_by.pk %}"><code>{{ reversed_by.number }}</code></a></div>{% endif %}
+
+{% if e.kind == "manual" or e.kind == "opening" or e.kind == "adjustment" %}
+<div class="wf">
+  <div class="wf-step is-done">{% icon "edit" 16 %}<div>{% t "st_draft" %}<small>{{ e.created_by|default:"—" }}</small></div></div>
+  {% if settings.require_review %}<div class="wf-step{% if e.reviewed_by %} is-done{% elif e.status == 'draft' %} is-now{% endif %}">{% icon "check" 16 %}<div>{% t "st_reviewed" %}<small>{{ e.reviewed_by|default:"—" }}</small></div></div>{% endif %}
+  {% if settings.require_approval %}<div class="wf-step{% if e.approved_by %} is-done{% elif e.status == 'reviewed' or e.status == 'draft' and not settings.require_review %} is-now{% endif %}">{% icon "check-circle" 16 %}<div>{% t "st_approved" %}<small>{{ e.approved_by|default:"—" }}</small></div></div>{% endif %}
+  <div class="wf-step{% if e.status == 'posted' %} is-done{% elif e.status == 'approved' %} is-now{% endif %}">{% icon "lock" 16 %}<div>{% t "st_posted" %}<small>{{ e.posted_by|default:"—" }}{% if e.posted_at %} · {{ e.posted_at|date:"Y-m-d H:i" }}{% endif %}</small></div></div>
+</div>
+{% endif %}
+
+<section class="card">
+  <div class="pad pad-b0">
+    <h2>{{ e.description }}</h2>
+    <p class="muted small">{% if e.reference %}{% t "reference" %}: <span class="num">{{ e.reference }}</span> · {% endif %}{% if source_url %}{% t "source_doc" %}: <a href="{{ source_url }}">{{ e.source_label|default:e.source_model }}</a> · {% endif %}{% if e.auto_reverse_on %}{% t "auto_reverse_on" %}: <span class="num">{{ e.auto_reverse_on|date:"Y-m-d" }}</span> · {% endif %}{% t "created_by" %}: {% if e.created_by %}{{ e.created_by }}{% else %}{% t "system" %}{% endif %} · <span class="num">{{ e.created_at|date:"Y-m-d H:i" }}</span></p>
+  </div>
+  {% include "ledger/_entry_lines.html" with show_dims=True %}
+</section>
+
+<div class="grid-2">
+  {% include "ledger/_attachments.html" with target="journalentry" obj_pk=e.pk can_attach=can.attach %}
+  {% include "ledger/_history.html" %}
+</div>
+{% endblock %}

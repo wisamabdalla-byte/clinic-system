@@ -164,7 +164,10 @@ class PaymentMethod(TimeStamped, Named):
 class AuditLog(models.Model):
     """Append-only record of sign-ins and changes."""
 
-    ACTIONS = ["create", "update", "login", "logout", "login_failed", "password", "prices", "status"]
+    ACTIONS = ["create", "update", "login", "logout", "login_failed", "password", "prices", "status",
+               # accounting
+               "review", "approve", "reject", "post", "reverse", "delete", "close", "reopen", "export",
+               "permissions", "backup", "restore"]
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)

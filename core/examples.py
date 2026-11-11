@@ -225,6 +225,13 @@ def erase_examples():
 
     A record is kept only if staff linked real data to it (for example a real
     invoice for an example patient)."""
+    from ledger.engine import purging
+
+    with purging():  # their journal entries go with them instead of being reversed
+        return _erase()
+
+
+def _erase():
     deleted = kept = 0
     for item in ExampleItem.objects.order_by("-id"):
         model = apps.get_model(item.model_label)

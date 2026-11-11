@@ -1,0 +1,18 @@
+{% load ui %}<div class="rtable-wrap">
+<table class="rtable">
+  <thead><tr><th>{% t "account" %}</th><th>{% t "description" %}</th><th>{% t "party" %}</th>{% if show_dims %}<th>{% t "project" %}</th>{% endif %}<th class="k-money">{% t "debit" %}</th><th class="k-money">{% t "credit" %}</th></tr></thead>
+  <tbody>
+    {% for ln in lines %}
+    <tr>
+      <td><a class="rlink" href="{% url 'ledger_report' 'general_ledger' %}?account={{ ln.account_id }}"><code>{{ ln.account.code }}</code> {{ ln.account.name }}</a></td>
+      <td>{{ ln.description|default:"" }}{% if ln.currency %} <span class="fx-hint num">({{ ln.fx_amount|money }} {{ ln.currency.code }} @ {{ ln.fx_rate|floatformat:4 }})</span>{% endif %}</td>
+      <td>{% if ln.party %}<a href="{% url 'party_detail' ln.party_id %}">{{ ln.party.name }}</a>{% endif %}</td>
+      {% if show_dims %}<td>{{ ln.project|default:"" }}</td>{% endif %}
+      <td class="k-money">{% if ln.debit %}{{ ln.debit|money }}{% endif %}</td>
+      <td class="k-money">{% if ln.credit %}{{ ln.credit|money }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% if debit is not None %}<tfoot><tr class="r-grand"><td colspan="{% if show_dims %}4{% else %}3{% endif %}">{% t "total" %}</td><td class="k-money">{{ debit|money }}</td><td class="k-money">{{ credit|money }}</td></tr></tfoot>{% endif %}
+</table>
+</div>

@@ -21,6 +21,7 @@ class Role(models.TextChoices):
 
 R = Role
 EVERYONE = set(Role.values)
+FIN = {R.ADMIN, R.MANAGER, R.ACCOUNTANT}
 
 PERMISSIONS = {
     "dashboard": {"view": EVERYONE},
@@ -73,6 +74,34 @@ PERMISSIONS = {
     "finance_reports": {"view": {R.ADMIN, R.MANAGER, R.ACCOUNTANT}},
     # Clinic name, logo and colours
     "settings": {"view": {R.ADMIN}, "edit": {R.ADMIN}},
+    # General ledger (ledger app). Admins can change any of these per user on the
+    # "Finance permissions" page (ledger.PermissionOverride).
+    "acc_home": {"view": FIN},
+    "coa": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}},
+    "journal": {
+        "view": FIN,
+        "edit": {R.ADMIN, R.ACCOUNTANT},  # write and change draft entries
+        "review": {R.ADMIN, R.MANAGER, R.ACCOUNTANT},
+        "approve": {R.ADMIN, R.MANAGER},
+        "post": {R.ADMIN, R.MANAGER, R.ACCOUNTANT},
+        "reverse": {R.ADMIN, R.MANAGER},
+    },
+    "vouchers": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}, "post": FIN, "cancel": {R.ADMIN, R.MANAGER}},
+    "bills": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}, "post": FIN, "cancel": {R.ADMIN, R.MANAGER}},
+    "treasury": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}, "reconcile": {R.ADMIN, R.ACCOUNTANT}},
+    "custody": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}, "post": FIN, "cancel": {R.ADMIN, R.MANAGER}},
+    "parties": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}},
+    "assets": {"view": FIN, "edit": {R.ADMIN, R.ACCOUNTANT}, "depreciate": {R.ADMIN, R.ACCOUNTANT},
+               "dispose": {R.ADMIN, R.MANAGER}},
+    "statements": {"view": FIN},
+    "periods": {
+        "view": FIN,
+        "edit": {R.ADMIN, R.MANAGER},  # close a month / a year
+        "reopen": {R.ADMIN},
+        "override": set(),  # post into a closed period: only superusers or users given it explicitly
+    },
+    "acc_settings": {"view": FIN, "edit": {R.ADMIN}},
+    "backup": {"view": {R.ADMIN}, "edit": {R.ADMIN}},
 }
 
 # Status actions a role may perform (others are refused even with "status" permission).
@@ -83,9 +112,27 @@ STATUS_ACTIONS = {
 }
 
 
+def role_allows(role, module, action="view"):
+    return role in PERMISSIONS.get(module, {}).get(action, set())
+
+
+def overrides(user):
+    """{"module.action": True/False} set for this user by an admin (cached on the user object)."""
+    cache = getattr(user, "_perm_overrides", None)
+    if cache is None:
+        from ledger.models import PermissionOverride
+
+        cache = dict(PermissionOverride.objects.filter(user_id=user.pk).values_list("perm", "allow"))
+        user._perm_overrides = cache
+    return cache
+
+
 def has_perm(user, module, action="view"):
     if not getattr(user, "is_authenticated", False) or not user.is_active:
         return False
     if user.is_superuser:
         return True
-    return user.role in PERMISSIONS.get(module, {}).get(action, set())
+    override = overrides(user).get(f"{module}.{action}")
+    if override is not None:
+        return override
+    return role_allows(user.role, module, action)

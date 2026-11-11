@@ -43,6 +43,31 @@ Who can do what:
 | Patients | everyone except storekeeper | admin, manager, doctor, nurse, reception |
 | Appointments | admin, manager, doctor, nurse, reception | book: admin, manager, reception |
 
+## Financial accounting (ERP ledger)
+
+The `ledger` app is a full double-entry accounting system under everything that moves money. The design (tables,
+relations, posting rules) is in [docs/accounting-design.md](docs/accounting-design.md). Sidebar: **General accounting**.
+
+| Area | What it does |
+|---|---|
+| Chart of accounts | Editable tree (assets, liabilities, equity, revenue, expenses), group and postable accounts, debit/credit nature, control accounts that need a customer/supplier, cash-flow class, foreign-currency accounts. A full clinic chart is created on install |
+| Journal entries | Manual, opening and adjusting entries with automatic numbers (`JV-2026-00001`), live balance check, attachments, auto-reversing accruals. Workflow: draft → reviewed → approved → posted (configurable). Posted entries can't be edited or deleted: **reverse** or **reverse & correct**, and both stay for audit |
+| Automatic entries | Patient invoices, payments, daily expenses, doctor month-closing and payouts post themselves. Editing or voiding a document reverses its old entry and posts a new one |
+| Bills | Sales bills (customers, insurers) and purchase/expense bills (suppliers), configurable taxes, foreign currency, due dates, paid / partly paid / unpaid / overdue |
+| Receipts & payments | Numbered receipt and payment vouchers, applied to bills, or straight to an account or expense category, with exchange differences |
+| Cash & banks | Cash boxes and bank accounts, transfers with fees and FX, bank reconciliation against the statement |
+| Custody & advances | Issue, spend (by category/project), return, remaining balance, settle and close |
+| Customers & suppliers | Files, balances, bills, vouchers, statements, ageing (0–30 / 31–60 / 61–90 / 90+). Patients and doctors get one automatically |
+| Fixed assets | Register, straight-line or declining-balance monthly depreciation in one entry, improvements, disposal with gain/loss, opening assets |
+| Reports | Journal, general ledger, trial balance, income statement, balance sheet, cash flow (direct), party statements and ageing, revenue/expenses by month, expenses by project, cash balances, asset register. Any date range, comparison with another period, print/PDF and Excel |
+| Controls | Per-user allow/deny for every finance action on top of the role, segregation of duties (no self-approval), monthly and yearly closing (closing entry to retained earnings), posting into a closed period only with a special permission, full activity log, JSON backup and restore |
+
+Only posted entries count in balances and reports. Ticking "include unposted" shows a warning on the report.
+No tax rate is assumed: enter the rates that Libyan law requires under Accounting settings → Taxes.
+
+After upgrading an existing installation, run `python manage.py ledger_sync` once (or press the button on the
+accounting overview) to create the entries for invoices and payments written earlier. `build.sh` does this on deploy.
+
 ## Run it on your computer (Windows)
 
 Needs Python 3.12+.
@@ -69,7 +94,7 @@ Never run `seed_demo` on the live site, and never use these passwords online.
 ### Tests
 
 ```bash
-.venv\Scripts\python manage.py test core
+.venv\Scripts\python manage.py test
 ```
 
 ## Put it online (Render + GitHub)
@@ -114,7 +139,7 @@ static/      styles and scripts
 ## Next stages
 
 3. Clinical records: tooth chart, dermatology photos, prescriptions, treatment plans
-4. Finance: invoices, cash boxes, expenses, insurance claims, accounting
-5. Warehouse and fixed assets
+4. Finance: invoices, cash boxes, expenses, insurance claims, general ledger (done)
+5. Warehouse (fixed assets: done)
 6. HR: attendance, shifts, payroll, commissions
 7. Online booking, WhatsApp reminders, reports, going live

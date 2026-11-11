@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "acc_settings_sub" %}</p>
+  </div>
+</div>
+
+<div class="rep-grid">
+  <a class="card rep-card" href="{% url 'period_list' %}"><span class="stat-icon">{% icon "calendar" 20 %}</span><span><strong>{% t "nav_periods" %}</strong><small>{% t "nav_periods_help" %}</small></span></a>
+  <a class="card rep-card" href="{% url 'expcat_list' %}"><span class="stat-icon">{% icon "tag" 20 %}</span><span><strong>{% t "nav_expcats" %}</strong><small>{{ counts.expcats }} · {% t "nav_expcats_help" %}</small></span></a>
+  <a class="card rep-card" href="{% url 'project_list' %}"><span class="stat-icon">{% icon "briefcase" 20 %}</span><span><strong>{% t "nav_projects" %}</strong><small>{{ counts.projects }} · {% t "nav_projects_help" %}</small></span></a>
+  <a class="card rep-card" href="{% url 'tax_list' %}"><span class="stat-icon">{% icon "percent" 20 %}</span><span><strong>{% t "nav_taxes" %}</strong><small>{{ counts.taxes }} · {% t "nav_taxes_help" %}</small></span></a>
+  <a class="card rep-card" href="{% url 'currency_list' %}"><span class="stat-icon">{% icon "globe" 20 %}</span><span><strong>{% t "nav_currencies" %}</strong><small>{{ counts.currencies }} · {% t "nav_currencies_help" %}</small></span></a>
+  <a class="card rep-card" href="{% url 'rate_list' %}"><span class="stat-icon">{% icon "repeat" 20 %}</span><span><strong>{% t "nav_rates" %}</strong><small>{% t "nav_rates_help" %}</small></span></a>
+  <a class="card rep-card" href="{% url 'assetcategory_list' %}"><span class="stat-icon">{% icon "monitor" 20 %}</span><span><strong>{% t "nav_asset_categories" %}</strong><small>{{ counts.asset_cats }}</small></span></a>
+  {% if user|can:"users.edit" %}<a class="card rep-card" href="{% url 'fin_permissions' %}"><span class="stat-icon">{% icon "shield" 20 %}</span><span><strong>{% t "nav_fin_permissions" %}</strong><small>{% t "nav_fin_permissions_help" %}</small></span></a>{% endif %}
+  {% if user|can:"backup.view" %}<a class="card rep-card" href="{% url 'backup' %}"><span class="stat-icon">{% icon "database" 20 %}</span><span><strong>{% t "nav_backup" %}</strong><small>{% t "nav_backup_help" %}</small></span></a>{% endif %}
+  {% if user|can:"audit.view" %}<a class="card rep-card" href="{% url 'audit_list' %}"><span class="stat-icon">{% icon "list" 20 %}</span><span><strong>{% t "nav_audit" %}</strong><small>{% t "audit_trail_help" %}</small></span></a>{% endif %}
+</div>
+
+<form method="post" class="card form-card mt" novalidate>
+  {% csrf_token %}
+  <section class="form-section">
+    <h2>{% t "workflow_rules" %}</h2>
+    <p class="muted">{% t "workflow_rules_help" %}</p>
+    <div class="form-grid">
+      {% with field=form.year_start_month %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.require_review %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.require_approval %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.allow_self_approval %}{% include "crud/_field.html" %}{% endwith %}
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>{% t "default_accounts" %}</h2>
+    <p class="muted">{% t "default_accounts_help" %}</p>
+    <div class="form-grid">
+      {% for field in form.visible_fields %}{% if forloop.counter > 4 %}{% include "crud/_field.html" %}{% endif %}{% endfor %}
+    </div>
+  </section>
+  {% if can_edit %}<div class="form-actions"><button class="btn btn-primary">{% t "save" %}</button></div>{% endif %}
+</form>
+
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}<input type="hidden" name="do" value="methods">
+  <h2>{% t "method_accounts" %}</h2>
+  <p class="muted">{% t "method_accounts_help" %}</p>
+  <div class="form-grid">{% for field in mform %}{% include "crud/_field.html" %}{% endfor %}</div>
+  {% if can_edit %}<div class="form-actions"><button class="btn btn-primary">{% t "save" %}</button></div>{% endif %}
+</form>
+{% endblock %}

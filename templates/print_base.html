@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}?v=9">
+  <link rel="stylesheet" href="{% static 'css/ledger.css' %}?v=1">
   {% if clinic.primary_color %}<style>:root { --primary: {{ clinic.primary_color }}; }</style>{% endif %}
 </head>
-<body class="print-body">
+<body class="print-body {% block body_class %}{% endblock %}">
   <div class="print-tools no-print">
     <button class="btn btn-primary" onclick="window.print()">{% icon "printer" 18 %}<span>{% t "print" %}</span></button>
     <a class="btn btn-ghost" href="{% block back %}{% endblock %}">{% t "back" %}</a>

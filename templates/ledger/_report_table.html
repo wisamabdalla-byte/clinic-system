@@ -1,0 +1,22 @@
+{% load ui %}<div class="rtable-wrap">
+<table class="rtable">
+  <thead><tr>{% for c in report.columns %}<th class="k-{{ c.kind }}">{{ c.label }}</th>{% endfor %}</tr></thead>
+  <tbody>
+    {% for row in report.rows %}
+    <tr class="r-{{ row.style|default:'line' }}">
+      {% for c in report.columns %}
+      {% with v=row.cells|get_item:c.key %}
+      <td class="k-{{ c.kind }}{% if c.key == report.link_key and row.level %} lvl-{{ row.level }}{% endif %}{% if c.kind == 'money' and v < 0 %} num-neg{% endif %}">
+        {% if v is None or v == "" %}{% elif c.kind == "money" %}{% if v %}{{ v|money2 }}{% else %}<span class="muted">–</span>{% endif %}{% elif c.kind == "pct" %}{{ v|floatformat:1 }}%{% elif c.kind == "date" %}<span class="num">{{ v|date:"Y-m-d" }}</span>{% elif c.kind == "code" %}<code>{{ v }}</code>{% elif c.key == report.link_key and row.url and not printing %}<a class="rlink" href="{{ row.url }}">{{ v }}</a>{% else %}{{ v }}{% endif %}
+      </td>
+      {% endwith %}
+      {% endfor %}
+    </tr>
+    {% empty %}
+    <tr><td colspan="{{ report.columns|length }}" class="muted">{% t "no_results" %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if report.summary %}<div class="rep-summary">{% for label, amount in report.summary %}<div><small>{{ label }}</small><strong class="{% if amount < 0 %}num-neg{% endif %}">{{ amount|money2 }}</strong></div>{% endfor %}</div>{% endif %}
+{% if report.notes %}<div class="rep-notes">{% for n in report.notes %}<p>{{ n }}</p>{% endfor %}</div>{% endif %}

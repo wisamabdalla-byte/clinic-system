@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "acc_home_sub" %} · <span class="num">{{ today|date:"Y-m-d" }}</span></p>
+  </div>
+  <div class="page-actions">
+    {% if user|can:"journal.edit" %}<a class="btn btn-primary" href="{% url 'journal_create' %}">{% icon "plus" 18 %}<span>{% t "new_entry" %}</span></a>{% endif %}
+    {% if user|can:"vouchers.edit" %}<a class="btn btn-ghost" href="{% url 'voucher_create_receipt' %}">{% icon "plus" 18 %}<span>{% t "new_receipt" %}</span></a>
+    <a class="btn btn-ghost" href="{% url 'voucher_create_payment' %}">{% icon "plus" 18 %}<span>{% t "new_payment" %}</span></a>{% endif %}
+  </div>
+</div>
+
+{% if unsynced and user|can:"acc_settings.edit" %}
+<div class="alert alert-warn gap">
+  <span>{% t "unsynced_docs" unsynced %}</span>
+  <form method="post" action="{% url 'ledger_sync' %}" class="inline">{% csrf_token %}<button class="btn btn-primary btn-sm">{% t "sync_now" %}</button></form>
+</div>
+{% endif %}
+
+<div class="stats">
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ cash_total|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "cash_and_banks" %}</span></div>
+  <div class="card stat"><span class="stat-icon">{% icon "users" 20 %}</span><span class="stat-value"><span class="num">{{ receivable|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "receivables" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "file" 20 %}</span><span class="stat-value"><span class="num">{{ payable|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "payables" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "percent" 20 %}</span><span class="stat-value"><span class="num">{{ doctors|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "set_doctors_payable" %}</span></div>
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "results" %}</h2>
+    <div class="rtable-wrap">
+    <table class="rtable">
+      <thead><tr><th></th><th class="k-money">{% t "this_month" %}</th><th class="k-money">{% t "this_year" %}</th></tr></thead>
+      <tbody>
+        <tr><td>{% t "total_revenue" %}</td><td class="k-money">{{ month.0|money }}</td><td class="k-money">{{ year.0|money }}</td></tr>
+        <tr><td>{% t "total_expense" %}</td><td class="k-money">{{ month.1|money }}</td><td class="k-money">{{ year.1|money }}</td></tr>
+        <tr class="r-grand"><td>{% t "net_result" %}</td><td class="k-money{% if month.2 < 0 %} num-neg{% endif %}">{{ month.2|money }}</td><td class="k-money{% if year.2 < 0 %} num-neg{% endif %}">{{ year.2|money }}</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted small">{% t "posted_only_note" %}</p>
+    <div class="quick-links mt">
+      <a class="btn btn-ghost btn-sm" href="{% url 'ledger_report' 'income_statement' %}">{% t "rep_income_statement" %}</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'ledger_report' 'balance_sheet' %}">{% t "rep_balance_sheet" %}</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'ledger_report' 'trial_balance' %}">{% t "rep_trial_balance" %}</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'ledger_report' 'cash_flow' %}">{% t "rep_cash_flow" %}</a>
+    </div>
+  </section>
+  <section class="card pad">
+    <h2>{% t "nav_treasury" %}</h2>
+    {% if treasuries %}
+    <ul class="kv">
+      {% for x in treasuries %}<li><span>{% if x.t.kind == "bank" %}{% icon "bank" 16 %}{% else %}{% icon "wallet" 16 %}{% endif %} {{ x.t.name }}</span><span>{% if x.fx is not None %}<span class="num muted">{{ x.fx|money }} {{ x.t.currency.code }}</span> · {% endif %}<strong class="num{% if x.balance < 0 %} num-neg{% endif %}">{{ x.balance|money }}</strong> {{ currency }}</span></li>{% endfor %}
+    </ul>
+    {% else %}<p class="muted">—</p>{% endif %}
+    <h2 class="mt">{% t "waiting_for_you" %}</h2>
+    <div class="pending-list">
+      <a class="badge badge-muted" href="{% url 'journal_list' %}?state=draft">{% t "st_draft" %}: {{ pending.draft|default:0 }}</a>
+      <a class="badge badge-info" href="{% url 'journal_list' %}?state=reviewed">{% t "st_reviewed" %}: {{ pending.reviewed|default:0 }}</a>
+      <a class="badge badge-accent" href="{% url 'journal_list' %}?state=approved">{% t "st_approved" %}: {{ pending.approved|default:0 }}</a>
+      <a class="badge" href="{% url 'custody_list' %}?open=False">{% t "open_custody" %}: {{ open_custody }}</a>
+    </div>
+  </section>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "overdue_bills" %}</h2>
+    {% if overdue %}
+    <div class="rtable-wrap"><table class="rtable">
+      <thead><tr><th>{% t "number" %}</th><th>{% t "party" %}</th><th>{% t "due_date" %}</th><th class="k-money">{% t "balance" %}</th></tr></thead>
+      <tbody>{% for b in overdue %}<tr><td><a href="{% url 'bill_detail' b.pk %}"><code>{{ b.number }}</code></a></td><td>{{ b.party.name }}</td><td class="num">{{ b.due_date|date:"Y-m-d" }}</td><td class="k-money">{{ b.balance|money }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty empty-sm"><span class="muted">{% t "no_overdue" %}</span></div>{% endif %}
+  </section>
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "recent_entries" %}</h2>
+    {% if recent %}
+    <div class="rtable-wrap"><table class="rtable">
+      <tbody>{% for e in recent %}<tr><td class="num nowrap">{{ e.date|date:"Y-m-d" }}</td><td><a href="{% url 'journal_detail' e.pk %}"><code>{{ e.number }}</code></a> {{ e.description|truncatechars:60 }}</td><td class="k-money">{{ e.total|money }}</td><td><span class="badge {% if e.status == 'posted' %}badge-good{% else %}badge-muted{% endif %}">{{ e.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

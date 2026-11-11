@@ -349,6 +349,10 @@ from .i18n_more import MORE  # noqa: E402
 
 T.update(MORE)
 
+from ledger.i18n import TEXT as LEDGER_TEXT  # noqa: E402
+
+T.update(LEDGER_TEXT)
+
 
 def current_lang():
     lang = get_language() or settings.LANGUAGE_CODE

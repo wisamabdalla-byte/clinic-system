@@ -34,6 +34,23 @@ def money(value):
     return f"{amount:,.2f}"
 
 
+@register.filter
+def money2(value):
+    """Accounting format: always two decimals, thousands separated."""
+    try:
+        return f"{Decimal(value):,.2f}"
+    except (InvalidOperation, TypeError, ValueError):
+        return value
+
+
+@register.filter
+def get_item(mapping, key):
+    try:
+        return mapping.get(key)
+    except AttributeError:
+        return None
+
+
 @register.simple_tag(takes_context=True)
 def qs(context, **changes):
     """Current query string with some parameters replaced: {% qs page=2 %}"""
@@ -98,6 +115,17 @@ ICONS = {
     "pill": '<rect x="2" y="8.5" width="20" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="m8.5 8.5 7 7"/>',
     "image": '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
     "trash": '<path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/>',
+    "book": '<path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20v3H6.5"/><path d="M9 7h7M9 11h5"/>',
+    "layers": '<path d="m12 2.5 9.5 5-9.5 5-9.5-5z"/><path d="m2.5 12 9.5 5 9.5-5M2.5 16.5l9.5 5 9.5-5"/>',
+    "repeat": '<path d="m17 2.5 3.5 3.5L17 9.5"/><path d="M3.5 11.5V10a4 4 0 0 1 4-4h13"/><path d="m7 21.5-3.5-3.5L7 14.5"/><path d="M20.5 12.5V14a4 4 0 0 1-4 4h-13"/>',
+    "file": '<path d="M14 2.5H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z"/><path d="M14 2.5v6h6M8 13h8M8 17h5"/>',
+    "bank": '<path d="M3 9.5 12 3l9 6.5M4.5 10v8M9.5 10v8M14.5 10v8M19.5 10v8M2.5 21h19M3 18h18"/>',
+    "briefcase": '<rect x="2.5" y="7" width="19" height="13.5" rx="2"/><path d="M8.5 7V4.5h7V7M2.5 12.5h19"/>',
+    "scale": '<path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3.5 3.5 0 0 0 6 0zM19 7l-3 7a3.5 3.5 0 0 0 6 0z"/>',
+    "download": '<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>',
+    "paperclip": '<path d="m21 11.5-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/>',
+    "upload": '<path d="M12 15V3M7 8l5-5 5 5M4 20h16"/>',
+    "database": '<ellipse cx="12" cy="5" rx="8.5" ry="3"/><path d="M3.5 5v14c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3V5M3.5 12c0 1.7 3.8 3 8.5 3s8.5-1.3 8.5-3"/>',
     "sparkle": '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
 }
 

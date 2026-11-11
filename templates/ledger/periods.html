@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'ledger_settings' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_acc_settings" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "periods_sub" %}</p>
+  </div>
+  {% if can_reval and foreign %}
+  <div class="page-actions">
+    <details class="action-more"><summary class="btn btn-ghost">{% icon "globe" 18 %}<span>{% t "fx_revaluation" %}</span></summary>
+      <form method="post" class="action-panel" data-confirm="{% t 'confirm_post' %}">{% csrf_token %}<input type="hidden" name="do" value="revalue">
+        <p class="muted small mt-0">{% t "fx_revaluation_help" %}</p>
+        <label class="field-label">{% t "date" %}</label><input class="input" type="date" name="date" value="{{ today|date:'Y-m-d' }}">
+        <button class="btn btn-primary btn-sm">{% t "fx_revaluation" %}</button></form>
+    </details>
+  </div>
+  {% endif %}
+</div>
+
+{% for y in years %}
+<section class="card">
+  <div class="pad pad-b0 section-head" style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap">
+    <h2 class="mt-0">{% t "fiscal_year" %} {{ y.y.name }} <span class="badge {% if y.y.is_closed %}badge-muted{% else %}badge-good{% endif %}">{% if y.y.is_closed %}{% t "closed" %}{% else %}{% t "open_" %}{% endif %}</span>
+      <small class="muted num">{{ y.y.start|date:"Y-m-d" }} → {{ y.y.end|date:"Y-m-d" }}</small></h2>
+    <div class="gap">
+      {% if y.y.closing_entry %}<a class="btn btn-ghost btn-sm" href="{% url 'journal_detail' y.y.closing_entry_id %}">{% t "closing_entry" %} <code>{{ y.y.closing_entry.number }}</code></a>{% endif %}
+      {% if not y.y.is_closed and can_close %}<form method="post" data-confirm="{% t 'confirm_close_year' %}">{% csrf_token %}<input type="hidden" name="do" value="close_year"><input type="hidden" name="year" value="{{ y.y.pk }}"><button class="btn btn-primary btn-sm">{% icon "lock" 16 %}<span>{% t "close_year" %}</span></button></form>{% endif %}
+      {% if y.y.is_closed and can_reopen %}<form method="post" data-confirm="{% t 'confirm_reopen' %}">{% csrf_token %}<input type="hidden" name="do" value="reopen_year"><input type="hidden" name="year" value="{{ y.y.pk }}"><button class="btn btn-ghost btn-sm">{% icon "undo" 16 %}<span>{% t "reopen_year" %}</span></button></form>{% endif %}
+    </div>
+  </div>
+  <div class="periods">
+    {% for p in y.periods %}
+    <div class="period{% if p.is_closed %} is-closed{% endif %}{% if p.start <= today and today <= p.end %} is-current{% endif %}">
+      <header><strong class="num">{{ p.start|date:"Y-m" }}</strong><span class="badge {% if p.is_closed %}badge-muted{% else %}badge-good{% endif %}">{% if p.is_closed %}{% icon "lock" 12 %} {% t "closed" %}{% else %}{% t "open_" %}{% endif %}</span></header>
+      <small>{% t "posted_entries" %}: <span class="num">{{ p.n_posted }}</span>{% if p.n_pending %} · <span class="danger-text">{% t "pending_entries" %}: <span class="num">{{ p.n_pending }}</span></span>{% endif %}</small>
+      {% if p.closed_by %}<small>{{ p.closed_by }} · <span class="num">{{ p.closed_at|date:"Y-m-d" }}</span></small>{% endif %}
+      {% if not y.y.is_closed %}
+        {% if not p.is_closed and can_close %}<form method="post" data-confirm="{% t 'confirm_close_period' %}">{% csrf_token %}<input type="hidden" name="do" value="close"><input type="hidden" name="period" value="{{ p.pk }}"><button class="btn btn-ghost btn-sm">{% icon "lock" 14 %}<span>{% t "close_period" %}</span></button></form>{% endif %}
+        {% if p.is_closed and can_reopen %}<form method="post" data-confirm="{% t 'confirm_reopen' %}">{% csrf_token %}<input type="hidden" name="do" value="reopen"><input type="hidden" name="period" value="{{ p.pk }}"><button class="btn btn-ghost btn-sm">{% icon "undo" 14 %}<span>{% t "reopen" %}</span></button></form>{% endif %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+<p class="muted small">{% t "periods_note" %}</p>
+{% endblock %}

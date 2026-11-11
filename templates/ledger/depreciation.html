@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'asset_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_assets" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "dep_runs_sub" %}</p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "dep_preview" %} · <span class="num">{{ up_to|date:"Y-m-d" }}</span></h2>
+    <form method="get" class="gap"><input class="input" type="date" name="date" value="{{ up_to|date:'Y-m-d' }}" style="max-width: 200px"><button class="btn btn-ghost btn-sm">{% t "show" %}</button></form>
+    {% if preview %}
+    <div class="rtable-wrap mt"><table class="rtable">
+      <thead><tr><th>{% t "nav_assets" %}</th><th class="k-money">{% t "months" %}</th><th class="k-money">{% t "amount" %}</th></tr></thead>
+      <tbody>{% for p in preview %}<tr><td><a href="{% url 'asset_detail' p.a.pk %}"><code>{{ p.a.code }}</code> {{ p.a.name }}</a></td><td class="k-money">{{ p.months }}</td><td class="k-money">{{ p.amount|money }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr class="r-grand"><td colspan="2">{% t "total" %}</td><td class="k-money">{{ preview_total|money }}</td></tr></tfoot>
+    </table></div>
+    {% if can_run %}
+    <form method="post" class="mt" data-confirm="{% t 'confirm_post' %}">{% csrf_token %}<input type="hidden" name="date" value="{{ up_to|date:'Y-m-d' }}"><button class="btn btn-primary">{% icon "lock" 18 %}<span>{% t "run_depreciation" %}</span></button></form>
+    {% endif %}
+    {% else %}<p class="muted mt">{% t "nothing_to_depreciate" %}</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "dep_history" %}</h2>
+    {% if runs %}<div class="rtable-wrap"><table class="rtable">
+      <thead><tr><th>{% t "number" %}</th><th>{% t "month" %}</th><th class="k-money">{% t "amount" %}</th><th>{% t "journal_entry" %}</th><th></th></tr></thead>
+      <tbody>{% for r in runs %}<tr{% if r.is_reversed %} class="r-muted"{% endif %}><td><code>{{ r.number }}</code></td><td class="num">{{ r.date|date:"Y-m" }}</td><td class="k-money">{{ r.total|money }}</td><td>{% if r.entry %}<a href="{% url 'journal_detail' r.entry_id %}"><code>{{ r.entry.number }}</code></a>{% endif %}{% if r.is_reversed %} <span class="badge badge-bad">{% t "reversed" %}</span>{% endif %}</td>
+        <td>{% if can_run and latest and r.pk == latest.pk %}<form method="post" data-confirm="{% t 'confirm_reverse' %}">{% csrf_token %}<input type="hidden" name="do" value="reverse"><input type="hidden" name="run" value="{{ r.pk }}"><button class="btn btn-ghost btn-sm">{% icon "undo" 14 %}<span>{% t "do_reverse" %}</span></button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>{% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

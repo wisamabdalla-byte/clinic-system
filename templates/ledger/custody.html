@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'custody_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_custody" %}</a>
+    <h1>{{ title }} <span class="badge {% if c.is_closed %}badge-muted{% else %}badge-good{% endif %}">{% if c.is_closed %}{% t "closed" %}{% else %}{% t "open_" %}{% endif %}</span></h1>
+    <p class="muted"><a href="{% url 'party_detail' c.holder_id %}">{{ c.holder.name }}</a> · {{ c.purpose }} · <span class="num">{{ c.date|date:"Y-m-d" }}</span>{% if c.project %} · {{ c.project }}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    {% if can_edit and fig.remaining == 0 and fig.issued %}
+    <form method="post" data-confirm="{% t 'confirm_close_custody' %}">{% csrf_token %}<input type="hidden" name="do" value="close"><button class="btn btn-primary">{% icon "lock" 18 %}<span>{% t "close_custody" %}</span></button></form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="stats stats-4">
+  <div class="card stat"><span class="stat-icon">{% icon "wallet" 20 %}</span><span class="stat-value num">{{ fig.issued|money }}</span><span class="stat-label">{% t "issued_amount" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "minus-circle" 20 %}</span><span class="stat-value num">{{ fig.spent|money }}</span><span class="stat-label">{% t "spent" %}</span></div>
+  <div class="card stat"><span class="stat-icon">{% icon "undo" 20 %}</span><span class="stat-value num">{{ fig.returned|money }}</span><span class="stat-label">{% t "returned" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "scale" 20 %}</span><span class="stat-value num">{{ fig.remaining|money }}</span><span class="stat-label">{% t "remaining" %}</span></div>
+</div>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "movements" %}</h2>
+  <div class="rtable-wrap"><table class="rtable">
+    <thead><tr><th>{% t "date" %}</th><th>{% t "number" %}</th><th>{% t "type" %}</th><th>{% t "description" %}</th><th>{% t "account" %}</th><th class="k-money">{% t "amount" %}</th><th>{% t "status" %}</th><th></th></tr></thead>
+    <tbody>
+      {% for m in movements %}
+      <tr{% if m.status == "cancelled" %} class="r-muted"{% endif %}>
+        <td class="k-date num">{{ m.date|date:"Y-m-d" }}</td>
+        <td><code>{{ m.number }}</code>{% if m.entry %}<br><a class="small" href="{% url 'journal_detail' m.entry_id %}">{{ m.entry.number }}</a>{% endif %}</td>
+        <td><span class="badge">{{ m.get_kind_display }}</span></td>
+        <td>{{ m.description|default:"" }}{% if m.reference %} <small class="muted num">{{ m.reference }}</small>{% endif %}</td>
+        <td class="small">{% if m.treasury %}{{ m.treasury.name }}{% elif m.category %}{{ m.category.name }}{% else %}{{ m.account|default:"" }}{% endif %}{% if m.project %} · {{ m.project }}{% endif %}</td>
+        <td class="k-money">{{ m.amount|money }}</td>
+        <td><span class="badge {% if m.status == 'posted' %}badge-good{% elif m.status == 'cancelled' %}badge-bad{% else %}badge-muted{% endif %}">{{ m.get_status_display }}</span></td>
+        <td class="nowrap">
+          {% if m.status == "draft" and can_post %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="movement" value="{{ m.pk }}"><button class="btn btn-ghost btn-sm" name="do" value="post">{% t "do_post" %}</button></form>{% endif %}
+          {% if m.status != "cancelled" and can_cancel and not c.is_closed %}<form method="post" class="inline" data-confirm="{% t 'confirm_cancel_doc' %}">{% csrf_token %}<input type="hidden" name="movement" value="{{ m.pk }}"><input type="hidden" name="reason" value="—"><button class="btn btn-ghost btn-sm" name="do" value="cancel" aria-label="{% t 'do_cancel_doc' %}">{% icon "x" 14 %}</button></form>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+{% if can_edit %}
+<form method="post" class="card form-card" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="do" value="add">
+  <h2>{% t "add_movement" %}</h2>
+  <p class="muted">{% t "movement_help" %}</p>
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <div class="form-grid">{% for field in form.visible_fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+  <div class="form-actions"><button class="btn btn-primary">{% t "save" %}</button></div>
+</form>
+{% endif %}
+
+{% include "ledger/_attachments.html" with obj_pk=c.pk can_attach=can_edit %}
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'asset_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_assets" %}</a>
+    <h1>{{ a.name }} <code>{{ a.code }}</code> <span class="badge {% if a.status == 'active' %}badge-good{% elif a.status == 'disposed' %}badge-bad{% else %}badge-muted{% endif %}">{{ a.get_status_display }}</span></h1>
+    <p class="muted">{{ a.category.name }}{% if a.branch %} · {{ a.branch.name }}{% endif %}{% if a.location %} · {{ a.location }}{% endif %}{% if a.serial_number %} · <span class="num">{{ a.serial_number }}</span>{% endif %}</p>
+  </div>
+  <div class="page-actions actions-bar">
+    {% if a.status == "draft" and can_edit %}
+      <a class="btn btn-ghost" href="{% url 'asset_edit' a.pk %}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>
+      <form method="post" data-confirm="{% t 'confirm_post' %}">{% csrf_token %}<input type="hidden" name="do" value="activate"><input class="input" type="date" name="date" value="{{ a.purchase_date|date:'Y-m-d' }}" aria-label="{% t 'date' %}"><button class="btn btn-primary">{% icon "lock" 18 %}<span>{% t "activate_asset" %}</span></button></form>
+      <form method="post" data-confirm="{% t 'confirm_delete_draft' %}">{% csrf_token %}<input type="hidden" name="do" value="delete"><button class="btn btn-ghost">{% icon "trash" 18 %}</button></form>
+    {% endif %}
+  </div>
+</div>
+{% if a.status == "draft" %}<div class="alert alert-warn">{% t "asset_draft_help" %}</div>{% endif %}
+
+<div class="stats stats-4">
+  <div class="card stat"><span class="stat-label">{% t "cost" %}</span><span class="stat-value num">{{ cost|money }}</span></div>
+  <div class="card stat"><span class="stat-label">{% t "accumulated_dep" %}</span><span class="stat-value num">{{ accumulated|money }}</span></div>
+  <div class="card stat"><span class="stat-label">{% t "book_value" %}</span><span class="stat-value num">{% if a.status == "disposed" %}0{% else %}{{ book|money }}{% endif %}</span></div>
+  <div class="card stat"><span class="stat-label">{% t "depreciated_to" %}</span><span class="stat-value num">{{ a.depreciated_to|date:"Y-m"|default:"—" }}</span></div>
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "details" %}</h2>
+    <ul class="kv">
+      <li><span>{% t "purchase_date" %}</span><span class="num">{{ a.purchase_date|date:"Y-m-d" }}</span></li>
+      <li><span>{% t "in_service_date" %}</span><span class="num">{{ a.in_service_date|date:"Y-m-d" }}</span></li>
+      <li><span>{% t "dep_method" %}</span><span>{{ a.get_method_display }}{% if a.method == "declining" %} · {{ a.declining_rate|default:"2×" }}%{% endif %}</span></li>
+      <li><span>{% t "life_months" %}</span><span class="num">{{ a.life_months }}</span></li>
+      <li><span>{% t "salvage_value" %}</span><span class="num">{{ a.salvage_value|money }}</span></li>
+      <li><span>{% t "funding" %}</span><span>{{ a.get_funding_display }}{% if a.treasury %} · {{ a.treasury.name }}{% endif %}{% if a.supplier %} · {{ a.supplier.name }}{% endif %}</span></li>
+      {% if a.opening_accumulated %}<li><span>{% t "opening_accumulated" %}</span><span class="num">{{ a.opening_accumulated|money }}</span></li>{% endif %}
+      {% if a.disposed_on %}<li><span>{% t "disposed_on" %}</span><span class="num">{{ a.disposed_on|date:"Y-m-d" }}</span></li>{% endif %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "dep_schedule" %}</h2>
+    {% if preview %}<div class="rtable-wrap"><table class="rtable"><thead><tr><th>{% t "month" %}</th><th class="k-money">{% t "amount" %}</th></tr></thead>
+      <tbody>{% for end, amount in preview %}<tr><td class="num">{{ end|date:"Y-m" }}</td><td class="k-money">{{ amount|money }}</td></tr>{% endfor %}</tbody></table></div>
+      <div class="rep-notes"><p>{% t "dep_schedule_note" %}</p></div>
+    {% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "asset_events" %}</h2>
+  <div class="rtable-wrap"><table class="rtable">
+    <thead><tr><th>{% t "date" %}</th><th>{% t "type" %}</th><th>{% t "description" %}</th><th class="k-money">{% t "amount" %}</th><th>{% t "journal_entry" %}</th></tr></thead>
+    <tbody>{% for ev in events %}<tr><td class="num nowrap">{{ ev.date|date:"Y-m-d" }}</td><td><span class="badge">{{ ev.get_kind_display }}</span></td><td>{{ ev.description }}{% if ev.months and ev.kind == "improvement" %} (+{{ ev.months }} {% t "months" %}){% endif %}{% if ev.kind == "disposal" %} · {% t "proceeds" %} <span class="num">{{ ev.proceeds|money }}</span>{% endif %}</td><td class="k-money">{{ ev.amount|money }}</td><td>{% if ev.entry %}<a href="{% url 'journal_detail' ev.entry_id %}"><code>{{ ev.entry.number }}</code></a>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="5" class="muted">—</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+{% if a.status == "active" or a.status == "depreciated" %}
+<div class="grid-2">
+  {% if can_edit %}
+  <form method="post" class="card form-card" novalidate>
+    {% csrf_token %}<input type="hidden" name="do" value="improve">
+    <h2>{% t "add_improvement" %}</h2>
+    <p class="muted small">{% t "improvement_help" %}</p>
+    <div class="form-grid">{% for field in improve_form.visible_fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+    <div class="form-actions"><button class="btn btn-primary">{% t "save" %}</button></div>
+  </form>
+  {% endif %}
+  {% if can_dispose %}
+  <form method="post" class="card form-card" novalidate data-confirm="{% t 'confirm_dispose' %}">
+    {% csrf_token %}<input type="hidden" name="do" value="dispose">
+    <h2>{% t "dispose_asset" %}</h2>
+    <p class="muted small">{% t "dispose_help" %}</p>
+    <div class="form-grid">{% for field in dispose_form.visible_fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+    <div class="form-actions"><button class="btn btn-primary">{% t "dispose_asset" %}</button></div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
+{% include "ledger/_attachments.html" with obj_pk=a.pk can_attach=can_edit %}
+{% include "ledger/_party_datalist.html" %}
+{% endblock %}

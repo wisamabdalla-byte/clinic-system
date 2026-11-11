@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'ledger_reports' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_statements" %}</a>
+    <h1>{{ report.title }}</h1>
+    <p class="muted num">{{ report.subtitle }}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% qs format='print' %}" target="_blank">{% icon "printer" 18 %}<span>{% t "print_pdf" %}</span></a>
+    <a class="btn btn-ghost" href="{% qs format='xlsx' %}">{% icon "download" 18 %}<span>Excel</span></a>
+  </div>
+</div>
+
+<div class="card">
+  <form method="get" class="filters">
+    <div class="field"><label for="f-from">{% if key == "balance_sheet" or key == "party_balances" %}{% t "dep_in_period" %} {% t "from" %}{% else %}{% t "from" %}{% endif %}</label><input id="f-from" class="input" type="date" name="from" value="{{ f.date_from|date:'Y-m-d' }}"></div>
+    <div class="field"><label for="f-to">{% if key == "balance_sheet" or key == "party_balances" %}{% t "as_of" %}{% else %}{% t "to" %}{% endif %}</label><input id="f-to" class="input" type="date" name="to" value="{{ f.date_to|date:'Y-m-d' }}"></div>
+    {% if "compare" in uses %}
+    <div class="field"><label for="f-cmp">{% t "compare_with" %}</label>
+      <select id="f-cmp" class="input select" name="compare">
+        <option value="">—</option>
+        <option value="prev"{% if f.compare == "prev" %} selected{% endif %}>{% t "cmp_prev" %}</option>
+        <option value="prev_year"{% if f.compare == "prev_year" %} selected{% endif %}>{% t "cmp_prev_year" %}</option>
+        <option value="custom"{% if f.compare == "custom" %} selected{% endif %}>{% t "cmp_custom" %}</option>
+      </select></div>
+    <div class="field"><label for="f-cf">{% t "cmp_custom" %} · {% t "from" %}</label><input id="f-cf" class="input" type="date" name="c_from" value="{{ f.c_from|date:'Y-m-d' }}"></div>
+    <div class="field"><label for="f-ct">{% t "cmp_custom" %} · {% t "to" %}</label><input id="f-ct" class="input" type="date" name="c_to" value="{{ f.c_to|date:'Y-m-d' }}"></div>
+    {% endif %}
+    {% if "account" in uses %}
+    <div class="field field-wide-f"><label for="f-acc">{% t "account" %}</label>
+      <select id="f-acc" class="input select" name="account"><option value="">{% t "all_accounts_with_activity" %}</option>
+        {% for a in accounts %}<option value="{{ a.pk }}"{% if f.account.pk == a.pk %} selected{% endif %}>{{ a.code }} · {{ a.name }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {% if "party" in uses %}
+    <div class="field field-wide-f"><label for="f-party">{% t "party" %}</label>
+      <select id="f-party" class="input select" name="party"><option value="">—</option>
+        {% for p in parties %}<option value="{{ p.pk }}"{% if f.party.pk == p.pk %} selected{% endif %}>{{ p.code }} · {{ p.name }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {% if "party_kind" in uses %}
+    <div class="field"><label for="f-pk">{% t "type" %}</label>
+      <select id="f-pk" class="input select" name="party_kind"><option value="">{% t "all" %}</option>
+        {% for v, l in party_kinds %}<option value="{{ v }}"{% if f.party_kind == v %} selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {% if "branch" in uses and branches|length > 1 %}
+    <div class="field"><label for="f-br">{% t "branch" %}</label>
+      <select id="f-br" class="input select" name="branch"><option value="">{% t "all_branches" %}</option>
+        {% for b in branches %}<option value="{{ b.pk }}"{% if f.branch.pk == b.pk %} selected{% endif %}>{{ b.name }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {% if "project" in uses and projects %}
+    <div class="field"><label for="f-pr">{% t "project" %}</label>
+      <select id="f-pr" class="input select" name="project"><option value="">{% t "all" %}</option>
+        {% for p in projects %}<option value="{{ p.pk }}"{% if f.project.pk == p.pk %} selected{% endif %}>{{ p }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {% if "level" in uses %}
+    <div class="field"><label for="f-lv">{% t "detail_level" %}</label>
+      <select id="f-lv" class="input select" name="level"><option value="">{% t "auto" %}</option>
+        {% for n in levels %}<option value="{{ n }}"{% if f.level == n %} selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    <label class="check-label"><input type="checkbox" name="zeros" value="1"{% if not f.hide_zero %} checked{% endif %}><span>{% t "show_zero" %}</span></label>
+    <label class="check-label"><input type="checkbox" name="unposted" value="1"{% if f.include_unposted %} checked{% endif %}><span>{% t "include_unposted" %}</span></label>
+    <button class="btn btn-primary">{% t "show" %}</button>
+  </form>
+  {% for w in report.warnings %}<div class="alert alert-warn" style="margin: 1rem">{% icon "alert" 16 %} {{ w }}</div>{% endfor %}
+  {% include "ledger/_report_table.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'ledger_settings' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_acc_settings" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "backup_sub" %}</p>
+  </div>
+</div>
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% icon "download" 18 %} {% t "backup_download" %}</h2>
+    <p class="muted">{% t "backup_download_help" %}</p>
+    <form method="post">{% csrf_token %}<input type="hidden" name="do" value="download"><button class="btn btn-primary">{% icon "download" 18 %}<span>{% t "backup_download" %}</span></button></form>
+  </section>
+  {% if can_restore %}
+  <section class="card pad">
+    <h2>{% icon "upload" 18 %} {% t "backup_restore" %}</h2>
+    <div class="alert alert-error">{% t "restore_warning" %}</div>
+    <form method="post" enctype="multipart/form-data" data-confirm="{% t 'restore_warning' %}">
+      {% csrf_token %}<input type="hidden" name="do" value="restore">
+      <div class="field"><label>{% t "backup_file" %}</label><input class="input" type="file" name="file" accept=".json,application/json" required></div>
+      <div class="field mt"><label>{% t "restore_type_confirm" %}</label><input class="input" name="confirm" autocomplete="off" dir="ltr" required></div>
+      <div class="form-actions"><button class="btn btn-primary">{% t "backup_restore" %}</button></div>
+    </form>
+  </section>
+  {% endif %}
+</div>
+<section class="card pad">
+  <h2>{% t "history" %}</h2>
+  {% if history %}<ul class="history">{% for h in history %}<li><time>{{ h.created_at|date:"Y-m-d H:i" }}</time><span>{{ h.username }} · {% t "act_"|add:h.action %} {% if h.changes %}<em>— {{ h.changes|join:", " }}</em>{% endif %}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted">—</p>{% endif %}
+  <p class="muted small">{% t "backup_note" %}</p>
+</section>
+{% endblock %}

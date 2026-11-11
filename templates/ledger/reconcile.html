@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'treasury_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_treasury" %}</a>
+    <h1>{{ title }} {% if rec.is_done %}<span class="badge badge-good">{% t "done" %}</span>{% endif %}</h1>
+    <p class="muted">{% t "reconcile_sub" %}</p>
+  </div>
+</div>
+
+<form method="post" data-reconcile data-base="{{ cleared_before }}" data-statement="{{ rec.statement_balance }}">
+  {% csrf_token %}
+  <div class="stats stats-4">
+    <div class="card stat"><span class="stat-label">{% t "statement_balance" %}</span><span class="stat-value num">{{ rec.statement_balance|money }}</span></div>
+    <div class="card stat"><span class="stat-label">{% t "book_balance" %}</span><span class="stat-value num">{{ book|money }}</span></div>
+    <div class="card stat"><span class="stat-label">{% t "cleared_balance" %}</span><span class="stat-value num" data-cleared>{{ cleared|money }}</span></div>
+    <div class="card stat"><span class="stat-label">{% t "difference" %}</span><span class="stat-value num{% if difference %} num-neg{% endif %}" data-diff>{{ difference|money }}</span></div>
+  </div>
+  <section class="card">
+    <div class="rtable-wrap"><table class="rtable">
+      <thead><tr><th>{% t "cleared" %}</th><th>{% t "date" %}</th><th>{% t "entry_no" %}</th><th>{% t "description" %}</th><th class="k-money">{% t "deposits" %}</th><th class="k-money">{% t "withdrawals" %}</th></tr></thead>
+      <tbody>
+        {% for ln in lines %}
+        <tr>
+          <td><input class="check" type="checkbox" name="line" value="{{ ln.pk }}" data-amount="{{ ln.amount }}"{% if ln.reconciliation_id == rec.pk %} checked{% endif %}{% if rec.is_done %} disabled{% endif %}></td>
+          <td class="k-date num">{{ ln.entry.date|date:"Y-m-d" }}</td>
+          <td><a href="{% url 'journal_detail' ln.entry_id %}"><code>{{ ln.entry.number }}</code></a></td>
+          <td>{{ ln.description|default:ln.entry.description }}</td>
+          <td class="k-money">{% if ln.debit %}{{ ln.debit|money }}{% endif %}</td>
+          <td class="k-money">{% if ln.credit %}{{ ln.credit|money }}{% endif %}</td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="muted">{% t "no_results" %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="rep-notes"><p>{% t "reconcile_note" %}</p><p>{% t "outstanding" %}: {% t "deposits" %} <span class="num">{{ outstanding_in|money }}</span> · {% t "withdrawals" %} <span class="num">{{ outstanding_out|money }}</span></p></div>
+  </section>
+  <div class="form-actions">
+    {% if not rec.is_done %}
+    <button class="btn btn-ghost" name="do" value="save">{% t "save" %}</button>
+    <button class="btn btn-primary" name="do" value="finish">{% t "finish_reconcile" %}</button>
+    {% elif user|can:"periods.reopen" %}
+    <button class="btn btn-ghost" name="do" value="reopen">{% t "reopen" %}</button>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/ledger.js' %}?v=1"></script>{% endblock %}

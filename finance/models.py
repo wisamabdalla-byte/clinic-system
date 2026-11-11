@@ -238,7 +238,8 @@ class ExpenseCategory(models.TextChoices):
 class Expense(TimeStamped):
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="expenses")
     date = models.DateField(default=timezone.localdate, db_index=True)
-    category = models.CharField(max_length=20, choices=ExpenseCategory.choices)
+    # Code of a ledger.ExpenseCategory (the admin manages the list; each category posts to its own account).
+    category = models.CharField(max_length=30)
     amount = models.DecimalField(**MONEY, validators=[MinValueValidator(Decimal("0.01"))])
     method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT, related_name="expenses")
     description = models.CharField(max_length=255)
@@ -252,3 +253,13 @@ class Expense(TimeStamped):
 
     def __str__(self):
         return self.description
+
+    @property
+    def category_label(self):
+        return expense_category_labels().get(self.category, self.category)
+
+
+def expense_category_labels():
+    from ledger.models import ExpenseCategory as LedgerCategory
+
+    return {c.code: c.name for c in LedgerCategory.objects.all()}

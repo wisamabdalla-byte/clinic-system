@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'party_list' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_parties" %}</a>
+    <h1>{{ p.name }} <span class="badge">{{ p.get_kind_display }}</span>{% if not p.is_active %} <span class="badge badge-muted">{% t "inactive" %}</span>{% endif %}</h1>
+    <p class="muted"><code>{{ p.code }}</code>{% if p.phone %} · <span class="num">{{ p.phone }}</span>{% endif %}{% if p.tax_no %} · {% t "tax_no" %} <span class="num">{{ p.tax_no }}</span>{% endif %}{% if p.patient %} · <a href="{% url 'patient_detail' p.patient_id %}">{% t "patient_file" %}</a>{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ statement_url }}">{% icon "file" 18 %}<span>{% t "rep_party_statement" %}</span></a>
+    {% if can_edit %}<a class="btn btn-ghost" href="{% url 'party_edit' p.pk %}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>{% endif %}
+    {% if p.kind == "supplier" and user|can:"bills.edit" %}<a class="btn btn-primary" href="{% url 'bill_create_purchase' %}?party={{ p.code }}">{% icon "plus" 18 %}<span>{% t "new_purchase_bill" %}</span></a>{% endif %}
+    {% if p.kind == "customer" and user|can:"bills.edit" %}<a class="btn btn-primary" href="{% url 'bill_create_sales' %}?party={{ p.code }}">{% icon "plus" 18 %}<span>{% t "new_sales_bill" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="stats stats-4">
+  <div class="card stat"><span class="stat-icon">{% icon "scale" 20 %}</span><span class="stat-value"><span class="num{% if balance < 0 %} num-neg{% endif %}">{{ balance|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% if balance >= 0 %}{% t "they_owe_us" %}{% else %}{% t "we_owe_them" %}{% endif %}</span></div>
+  {% for k, v in aging.items %}<div class="card stat"><span class="stat-value num">{{ v|money }}</span><span class="stat-label">{% t "age_"|add:k %}</span></div>{% endfor %}
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "nav_bills" %}</h2>
+    {% if bills %}<div class="rtable-wrap"><table class="rtable">
+      <thead><tr><th>{% t "number" %}</th><th>{% t "date" %}</th><th class="k-money">{% t "total" %}</th><th class="k-money">{% t "balance" %}</th><th>{% t "status" %}</th></tr></thead>
+      <tbody>{% for b in bills %}<tr><td><a href="{% url 'bill_detail' b.pk %}"><code>{{ b.number }}</code></a></td><td class="num">{{ b.date|date:"Y-m-d" }}</td><td class="k-money">{{ b.total|money }}</td><td class="k-money">{{ b.balance|money }}</td><td><span class="badge {{ b.badge }}">{% t "bs_"|add:b.payment_state %}</span>{% if b.is_overdue %} <span class="badge badge-bad">{% t "overdue" %}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>{% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "nav_vouchers" %}</h2>
+    {% if vouchers %}<div class="rtable-wrap"><table class="rtable">
+      <tbody>{% for v in vouchers %}<tr><td class="num nowrap">{{ v.date|date:"Y-m-d" }}</td><td><a href="{% url 'voucher_detail' v.pk %}"><code>{{ v.number }}</code></a> {{ v.get_kind_display }}</td><td class="k-money">{{ v.amount|money }}</td><td><span class="badge {% if v.status == 'posted' %}badge-good{% else %}badge-muted{% endif %}">{{ v.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>{% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <h2 class="pad pad-b0">{% t "recent_movements" %}</h2>
+  {% if recent %}<div class="rtable-wrap"><table class="rtable">
+    <thead><tr><th>{% t "date" %}</th><th>{% t "entry_no" %}</th><th>{% t "description" %}</th><th>{% t "account" %}</th><th class="k-money">{% t "debit" %}</th><th class="k-money">{% t "credit" %}</th></tr></thead>
+    <tbody>{% for ln in recent %}<tr><td class="num nowrap">{{ ln.entry.date|date:"Y-m-d" }}</td><td><a href="{% url 'journal_detail' ln.entry_id %}"><code>{{ ln.entry.number }}</code></a></td><td>{{ ln.entry.description|truncatechars:70 }}</td><td class="small">{{ ln.account }}</td><td class="k-money">{% if ln.debit %}{{ ln.debit|money }}{% endif %}</td><td class="k-money">{% if ln.credit %}{{ ln.credit|money }}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+</section>
+
+<section class="card pad">
+  <h2>{% t "details" %}</h2>
+  <ul class="kv">
+    <li><span>{% t "party_account" %}</span><span>{{ p.default_account }}</span></li>
+    <li><span>{% t "payment_terms_days" %}</span><span class="num">{{ p.payment_terms_days }}</span></li>
+    <li><span>{% t "credit_limit" %}</span><span class="num">{{ p.credit_limit|default:"—" }}</span></li>
+    <li><span>{% t "email" %}</span><span>{{ p.email|default:"—" }}</span></li>
+    <li><span>{% t "address" %}</span><span>{{ p.address|default:"—" }}</span></li>
+  </ul>
+  {% if p.notes %}<p class="pre muted">{{ p.notes }}</p>{% endif %}
+</section>
+{% endblock %}

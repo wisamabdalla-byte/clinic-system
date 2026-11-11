@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "entry_form_sub" %}</p>
+  </div>
+</div>
+
+<form method="post" class="card form-card" novalidate data-entry-form>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  {% if entry.return_note %}<div class="alert alert-warn">{% t "returned_note" %}: {{ entry.return_note }}</div>{% endif %}
+  <div class="form-grid">
+    {% with field=form.date %}{% include "crud/_field.html" %}{% endwith %}
+    {% with field=form.kind %}{% include "crud/_field.html" %}{% endwith %}
+    {% with field=form.reference %}{% include "crud/_field.html" %}{% endwith %}
+    {% with field=form.auto_reverse_on %}{% include "crud/_field.html" %}{% endwith %}
+    <div class="field-wide-wrap" style="grid-column: 1 / -1">{% with field=form.description %}{% include "crud/_field.html" %}{% endwith %}</div>
+  </div>
+
+  <section class="form-section" data-formset>
+    <h2>{% t "entry_lines" %}</h2>
+    {{ formset.management_form }}
+    {% for e in formset.non_form_errors %}<div class="alert alert-error">{{ e }}</div>{% endfor %}
+    <div class="table-wrap">
+      <table class="table table-form lines-table">
+        <thead><tr>
+          <th>{% t "account" %}</th><th>{% t "description" %}</th><th>{% t "debit" %}</th><th>{% t "credit" %}</th>
+          <th>{% t "party" %}</th><th>{% t "project" %}</th><th><span class="sr-only">{% t "remove" %}</span></th>
+        </tr></thead>
+        <tbody data-formset-body>
+          {% for f in formset %}{% include "ledger/_line_row.html" %}{% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="2">{% t "total" %} <span class="balance-chip" data-balance-chip></span></td>
+            <td class="w-amt"><span class="num" data-total-debit>0</span></td><td class="w-amt"><span class="num" data-total-credit>0</span></td><td colspan="3"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <template data-formset-template>{% include "ledger/_line_row.html" with f=formset.empty_form %}</template>
+    <div class="gap">
+      <button type="button" class="btn btn-ghost" data-formset-add data-prefix="{{ formset.prefix }}">{% icon "plus" 18 %}<span>{% t "add_row" %}</span></button>
+      <button type="button" class="btn btn-ghost" data-balance-last>{% icon "scale" 18 %}<span>{% t "balance_last_line" %}</span></button>
+    </div>
+    <p class="muted small mt">{% t "entry_lines_help" %}</p>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn-primary">{% t "save_draft" %}</button>
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% include "ledger/_party_datalist.html" %}
+{{ accounts|json_script:"account-info" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/finance.js' %}?v=1"></script><script src="{% static 'js/ledger.js' %}?v=1"></script>{% endblock %}

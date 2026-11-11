@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }} <span class="badge {{ badge }}">{% if state %}{% t "bs_"|add:state %}{% else %}{{ doc.get_status_display }}{% endif %}</span></h1>
+    <p class="muted"><span class="num">{{ doc.date|date:"Y-m-d" }}</span>{% if doc.branch %} · {{ doc.branch.name }}{% endif %}{% if doc.created_by %} · {% t "created_by" %}: {{ doc.created_by }}{% endif %}</p>
+  </div>
+  <div class="page-actions actions-bar">
+    <a class="btn btn-ghost" href="?print=1" target="_blank">{% icon "printer" 18 %}<span>{% t "print" %}</span></a>
+    {% if pay_url %}<a class="btn btn-ghost" href="{{ pay_url }}">{% icon "wallet" 18 %}<span>{% if doc.kind == "sales" %}{% t "new_receipt" %}{% else %}{% t "new_payment" %}{% endif %}</span></a>{% endif %}
+    {% if can.edit and edit_url %}<a class="btn btn-ghost" href="{{ edit_url }}">{% icon "edit" 18 %}<span>{% t "edit" %}</span></a>{% endif %}
+    {% if can.post %}<form method="post" action="{{ action_url }}" data-confirm="{% t 'confirm_post' %}">{% csrf_token %}<input type="hidden" name="do" value="post"><button class="btn btn-primary">{% icon "lock" 18 %}<span>{% t "do_post" %}</span></button></form>{% endif %}
+    {% if can.cancel %}
+    <details class="action-more"><summary class="btn btn-ghost">{% icon "x" 18 %}<span>{% t "do_cancel_doc" %}</span></summary>
+      <form method="post" action="{{ action_url }}" class="action-panel" data-confirm="{% t 'confirm_cancel_doc' %}">{% csrf_token %}<input type="hidden" name="do" value="cancel">
+        <p class="muted small mt-0">{% t "cancel_doc_help" %}</p>
+        <label class="field-label">{% t "reason" %}</label><input class="input" name="reason" maxlength="255" required>
+        <button class="btn btn-primary btn-sm">{% t "do_cancel_doc" %}</button></form>
+    </details>
+    {% endif %}
+  </div>
+</div>
+
+{% if doc.status == "draft" %}<div class="alert alert-warn">{% t "doc_draft_warning" %}</div>{% endif %}
+{% if doc.status == "cancelled" %}<div class="alert alert-error">{% t "st_cancelled" %}{% if doc.cancel_reason %}: {{ doc.cancel_reason }}{% endif %}</div>{% endif %}
+
+<div class="stats stats-4">
+  {% if doc.total is not None and bill_lines is not None %}
+  <div class="card stat"><span class="stat-icon">{% icon "receipt" 20 %}</span><span class="stat-value"><span class="num">{{ doc.total|money }}</span> <small class="cur">{% if doc.currency and not doc.currency.is_base %}{{ doc.currency.code }}{% else %}{{ currency }}{% endif %}</small></span><span class="stat-label">{% t "total" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "check-circle" 20 %}</span><span class="stat-value"><span class="num">{{ doc.paid|money }}</span></span><span class="stat-label">{% t "paid" %}</span></div>
+  <div class="card stat"><span class="stat-icon stat-icon-accent">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ doc.balance|money }}</span></span><span class="stat-label">{% t "balance" %}{% if doc.is_overdue %} · <span class="danger-text">{% t "overdue" %}</span>{% endif %}</span></div>
+  {% else %}
+  <div class="card stat"><span class="stat-icon">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ doc.amount|money }}</span> <small class="cur">{% if doc.treasury.account.currency and not doc.treasury.account.currency.is_base %}{{ doc.treasury.account.currency.code }}{% elif doc.source.account.currency and not doc.source.account.currency.is_base %}{{ doc.source.account.currency.code }}{% else %}{{ currency }}{% endif %}</small></span><span class="stat-label">{% t "amount" %}</span></div>
+  {% endif %}
+</div>
+
+<div class="grid-2">
+  <section class="card pad">
+    <h2>{% t "details" %}</h2>
+    <ul class="kv">{% for label, value in fields %}<li><span>{{ label }}</span><span>{% if value.year %}<span class="num">{{ value|date:"Y-m-d" }}</span>{% else %}{{ value }}{% endif %}</span></li>{% endfor %}
+      {% if doc.entry %}<li><span>{% t "journal_entry" %}</span><a href="{% url 'journal_detail' doc.entry_id %}"><code>{{ doc.entry.number }}</code></a></li>{% endif %}
+    </ul>
+    {% if doc.notes %}<p class="pre muted">{{ doc.notes }}</p>{% endif %}
+  </section>
+  {% if allocations %}
+  <section class="card pad">
+    <h2>{% if bill_lines is not None %}{% t "payments_on_bill" %}{% else %}{% t "allocations" %}{% endif %}</h2>
+    <ul class="kv">
+      {% for a in allocations %}
+      {% if bill_lines is not None %}<li><span><a href="{% url 'voucher_detail' a.voucher_id %}"><code>{{ a.voucher.number }}</code></a> · <span class="num">{{ a.voucher.date|date:"Y-m-d" }}</span>{% if a.voucher.status != "posted" %} <span class="badge badge-muted">{{ a.voucher.get_status_display }}</span>{% endif %}</span><span class="num">{{ a.amount|money }}</span></li>
+      {% else %}<li><span><a href="{% url 'bill_detail' a.bill_id %}"><code>{{ a.bill.number }}</code></a></span><span class="num">{{ a.amount|money }}</span></li>{% endif %}
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</div>
+
+{% if bill_lines %}
+<section class="card">
+  <h2 class="pad pad-b0">{% t "bill_lines" %}</h2>
+  <div class="rtable-wrap"><table class="rtable">
+    <thead><tr><th>{% t "description" %}</th><th>{% t "account" %}</th><th>{% t "project" %}</th><th class="k-money">{% t "quantity" %}</th><th class="k-money">{% t "price" %}</th><th class="k-money">{% t "tax" %}</th><th class="k-money">{% t "line_total" %}</th></tr></thead>
+    <tbody>{% for ln in bill_lines %}<tr><td>{{ ln.description }}</td><td>{% if ln.category %}{{ ln.category.name }} · {% endif %}{{ ln.target_account|default:"" }}</td><td>{{ ln.project|default:"" }}</td><td class="k-money">{{ ln.quantity|money }}</td><td class="k-money">{{ ln.unit_price|money }}</td><td class="k-money">{{ ln.tax_amount|money }}</td><td class="k-money">{{ ln.net|add:ln.tax_amount|money }}</td></tr>{% endfor %}</tbody>
+    <tfoot>
+      <tr><td colspan="6">{% t "subtotal" %}</td><td class="k-money">{{ doc.subtotal|money }}</td></tr>
+      <tr><td colspan="6">{% t "tax" %}</td><td class="k-money">{{ doc.tax_total|money }}</td></tr>
+      <tr class="r-grand"><td colspan="6">{% t "total" %}</td><td class="k-money">{{ doc.total|money }}</td></tr>
+    </tfoot>
+  </table></div>
+</section>
+{% endif %}
+
+{% if entry_lines %}
+<section class="card">
+  <h2 class="pad pad-b0">{% t "accounting_effect" %} · <a href="{% url 'journal_detail' doc.entry_id %}"><code>{{ doc.entry.number }}</code></a></h2>
+  {% include "ledger/_entry_lines.html" with lines=entry_lines debit=None %}
+</section>
+{% endif %}
+
+<div class="grid-2">
+  {% include "ledger/_attachments.html" with obj_pk=doc.pk can_attach=can.attach %}
+  {% include "ledger/_history.html" %}
+</div>
+{% endblock %}

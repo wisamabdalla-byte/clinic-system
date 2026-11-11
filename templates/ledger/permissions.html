@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{% url 'ledger_settings' %}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "nav_acc_settings" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "fin_permissions_sub" %}</p>
+  </div>
+  <div class="page-actions">
+    <form method="get" class="gap">
+      <select name="user" class="input select" data-autosubmit aria-label="{% t 'add_user_column' %}">
+        <option value="">{% t "add_user_column" %}…</option>
+        {% for u in all_users %}{% if u not in users %}<option value="{{ u.pk }}">{{ u }} · {{ u.get_role_display }}</option>{% endif %}{% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="rtable-wrap">
+  <table class="rtable perm-table">
+    <thead><tr><th>{% t "permission" %}</th>{% for u in users %}<th>{{ u }}<br><small class="muted">{{ u.get_role_display }}</small></th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for r in rows %}
+      {% ifchanged r.module %}<tr class="mod-row"><td colspan="{{ users|length|add:1 }}">{% t "nav_"|add:r.module %}</td></tr>{% endifchanged %}
+      <tr>
+        <td>{% t "perm_action_"|add:r.action %} <small class="muted"><code>{{ r.module }}.{{ r.action }}</code></small></td>
+        {% for c in r.cells %}
+        <td><span class="perm-dot{% if c.effective %} on{% endif %}" title="{% if c.effective %}{% t 'allowed' %}{% else %}{% t 'denied' %}{% endif %}"></span>
+          <select name="{{ c.name }}" aria-label="{{ c.user }} {{ r.module }}.{{ r.action }}">
+            <option value=""{% if c.value == "" %} selected{% endif %}>{% t "role_default" %} ({% if c.default %}✓{% else %}✗{% endif %})</option>
+            <option value="1"{% if c.value == "1" %} selected{% endif %}>{% t "allow" %}</option>
+            <option value="0"{% if c.value == "0" %} selected{% endif %}>{% t "deny" %}</option>
+          </select></td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="pad"><button class="btn btn-primary">{% t "save" %}</button> <span class="muted small">{% t "fin_permissions_note" %}</span></div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/ledger.js' %}?v=1"></script>{% endblock %}

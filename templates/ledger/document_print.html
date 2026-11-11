@@ -1,0 +1,45 @@
+{% extends "print_base.html" %}
+{% load ui %}
+{% block title %}{{ title }}{% endblock %}
+{% block back %}?{% endblock %}
+{% block sheet %}
+<div class="sheet-title">
+  <h1>{{ title }}</h1>
+  <span class="num">{{ doc.date|date:"Y-m-d" }}</span>
+</div>
+{% if doc.status != "posted" %}<div class="alert alert-warn">{{ doc.get_status_display }}{% if doc.cancel_reason %}: {{ doc.cancel_reason }}{% endif %}</div>{% endif %}
+<div class="sheet-kv">
+  <ul class="kv">{% for label, value in fields %}<li><span>{{ label }}</span><span>{% if value.year %}<span class="num">{{ value|date:"Y-m-d" }}</span>{% else %}{{ value }}{% endif %}</span></li>{% endfor %}</ul>
+  <ul class="kv">
+    {% if bill_lines is not None %}
+      <li><span>{% t "total" %}</span><strong class="num">{{ doc.total|money }}</strong></li>
+      <li><span>{% t "paid" %}</span><span class="num">{{ doc.paid|money }}</span></li>
+      <li><span>{% t "balance" %}</span><strong class="num">{{ doc.balance|money }}</strong></li>
+    {% else %}
+      <li><span>{% t "amount" %}</span><strong class="num">{{ doc.amount|money }} {% if doc.treasury.account.currency and not doc.treasury.account.currency.is_base %}{{ doc.treasury.account.currency.code }}{% else %}{{ currency }}{% endif %}</strong></li>
+    {% endif %}
+    {% if doc.entry %}<li><span>{% t "journal_entry" %}</span><code>{{ doc.entry.number }}</code></li>{% endif %}
+  </ul>
+</div>
+{% if bill_lines %}
+<table class="table sheet-table">
+  <thead><tr><th>{% t "description" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th><th>{% t "tax" %}</th><th>{% t "line_total" %}</th></tr></thead>
+  <tbody>{% for ln in bill_lines %}<tr><td>{{ ln.description }}</td><td class="num">{{ ln.quantity|money }}</td><td class="num">{{ ln.unit_price|money }}</td><td class="num">{{ ln.tax_amount|money }}</td><td class="num">{{ ln.net|add:ln.tax_amount|money }}</td></tr>{% endfor %}</tbody>
+</table>
+<dl class="sheet-totals">
+  <div><dt>{% t "subtotal" %}</dt><dd class="num">{{ doc.subtotal|money }}</dd></div>
+  <div><dt>{% t "tax" %}</dt><dd class="num">{{ doc.tax_total|money }}</dd></div>
+  <div class="strong"><dt>{% t "total" %}</dt><dd class="num">{{ doc.total|money }}</dd></div>
+</dl>
+{% endif %}
+{% if entry_lines %}
+<h2>{% t "accounting_effect" %}</h2>
+<table class="table sheet-table">
+  <thead><tr><th>{% t "account" %}</th><th>{% t "party" %}</th><th>{% t "debit" %}</th><th>{% t "credit" %}</th></tr></thead>
+  <tbody>{% for ln in entry_lines %}<tr><td><code>{{ ln.account.code }}</code> {{ ln.account.name }}</td><td>{{ ln.party|default:"" }}</td><td class="num">{% if ln.debit %}{{ ln.debit|money }}{% endif %}</td><td class="num">{% if ln.credit %}{{ ln.credit|money }}{% endif %}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+<div class="signature" style="justify-content: space-between">
+  <span>{% t "sig_prepared" %}</span><span>{% t "sig_approved" %}</span><span>{% t "sig_received" %}</span>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load ui %}{% if history %}<section class="card pad">
+  <h2>{% icon "shield" 18 %} {% t "history" %}</h2>
+  <ul class="history">
+    {% for h in history %}
+    <li><time>{{ h.created_at|date:"Y-m-d H:i" }}</time><span><strong>{{ h.username|default:"—" }}</strong> · {% t "act_"|add:h.action %}{% if h.changes %} <em>— {{ h.changes|join:"، " }}</em>{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+</section>{% endif %}

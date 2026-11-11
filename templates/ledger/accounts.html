@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "coa_sub" %}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="?inactive={% if show_inactive %}0{% else %}1{% endif %}">{% if show_inactive %}{% t "hide_inactive" %}{% else %}{% t "show_inactive" %}{% endif %}</a>
+    {% if can_edit %}<a class="btn btn-primary" href="{% url 'account_create' %}">{% icon "plus" 18 %}<span>{% t "add" %}</span></a>{% endif %}
+  </div>
+</div>
+<div class="card">
+  <div class="rtable-wrap">
+  <table class="rtable">
+    <thead><tr><th>{% t "account" %}</th><th>{% t "acc_type" %}</th><th>{% t "nature" %}</th><th>{% t "flags" %}</th><th class="k-money">{% t "balance" %} ({{ currency }})</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr class="acc-row depth-{{ r.depth }}{% if r.a.is_group %} is-group{% endif %}">
+        <td class="lvl-{{ r.depth|add:'-1' }}"><span class="acc-name"><span class="acc-code">{{ r.a.code }}</span>{% if r.a.is_group %}{% icon "layers" 14 %}{% endif %}<a class="rlink" href="{% url 'ledger_report' 'general_ledger' %}?account={{ r.a.pk }}">{{ r.a.name }}</a>{% if not r.a.is_active %} <span class="badge badge-muted">{% t "inactive" %}</span>{% endif %}</span></td>
+        <td>{{ r.a.get_type_display }}</td>
+        <td>{{ r.a.get_nature_display }}</td>
+        <td><span class="acc-flags">{% if r.a.is_group %}<span class="badge badge-muted">{% t "is_group" %}</span>{% endif %}{% if r.a.is_control %}<span class="badge badge-info">{% t "is_control" %}</span>{% endif %}{% if r.a.is_cash %}<span class="badge badge-good">{{ r.a.treasury.get_kind_display }}</span>{% endif %}{% if r.a.currency %}<span class="badge badge-accent">{{ r.a.currency.code }}</span>{% endif %}{% if r.a.cash_flow %}<span class="badge badge-muted">{{ r.a.get_cash_flow_display }}</span>{% endif %}</span></td>
+        <td class="k-money{% if r.balance < 0 %} num-neg{% endif %}">{% if r.balance %}{{ r.balance|money }}{% endif %}</td>
+        <td class="nowrap">{% if can_edit %}<a class="btn btn-ghost btn-sm" href="{% url 'account_edit' r.a.pk %}" title="{% t 'edit' %}" aria-label="{% t 'edit' %}">{% icon "edit" 14 %}</a>{% if r.a.is_group %}<a class="btn btn-ghost btn-sm" href="{% url 'account_create' %}?parent={{ r.a.pk }}" title="{% t 'add_sub_account' %}" aria-label="{% t 'add_sub_account' %}">{% icon "plus" 14 %}</a>{% endif %}{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="rep-notes"><p>{% t "coa_note" %}</p></div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% load ui %}<tr class="formset-row">
+  <td data-label="{% t 'account' %}" class="w-acc">
+    {{ f.account }}
+    <span class="fx-hint" data-fx-box hidden>{% t "amount_in" %} <span data-fx-code></span>: {{ f.fx_amount }}</span>
+    {% for e in f.account.errors %}<small class="error">{{ e }}</small>{% endfor %}
+    {% for e in f.non_field_errors %}<small class="error">{{ e }}</small>{% endfor %}
+  </td>
+  <td data-label="{% t 'description' %}">{{ f.description }}</td>
+  <td data-label="{% t 'debit' %}" class="w-amt">{{ f.debit }}{% for e in f.debit.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'credit' %}" class="w-amt">{{ f.credit }}{% for e in f.credit.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'party' %}" class="w-party">{{ f.party }}{% for e in f.party.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'project' %}" class="w-proj">{{ f.project }}</td>
+  <td><button type="button" class="btn btn-ghost btn-sm" data-remove-row aria-label="{% t 'remove' %}">{% icon "x" 16 %}</button></td>
+</tr>

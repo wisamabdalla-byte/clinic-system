@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% if kind == "sales" %}{% t "sales_bill_sub" %}{% else %}{% t "purchase_bill_sub" %}{% endif %}</p>
+  </div>
+  <div class="page-actions"><a class="btn btn-ghost" href="{% url 'party_create' %}?kind={% if kind == 'sales' %}customer{% else %}supplier{% endif %}" target="_blank">{% icon "plus" 18 %}<span>{% if kind == "sales" %}{% t "new_customer" %}{% else %}{% t "new_supplier" %}{% endif %}</span></a></div>
+</div>
+
+<form method="post" class="card form-card" novalidate data-bill-form>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <div class="form-grid">{% for field in form.visible_fields %}{% include "crud/_field.html" %}{% endfor %}</div>
+
+  <section class="form-section" data-formset>
+    <h2>{% t "bill_lines" %}</h2>
+    {{ formset.management_form }}
+    {% for e in formset.non_form_errors %}<div class="alert alert-error">{{ e }}</div>{% endfor %}
+    <div class="table-wrap">
+      <table class="table table-form lines-table">
+        <thead><tr><th>{% t "description" %}</th>{% if kind != "sales" %}<th>{% t "expense_category" %}</th>{% endif %}<th>{% t "account" %}</th><th>{% t "project" %}</th><th>{% t "quantity" %}</th><th>{% t "price" %}</th><th>{% t "tax" %}</th><th>{% t "line_total" %}</th><th></th></tr></thead>
+        <tbody data-formset-body>{% for f in formset %}{% include "ledger/_bill_row.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+    <template data-formset-template>{% include "ledger/_bill_row.html" with f=formset.empty_form %}</template>
+    <button type="button" class="btn btn-ghost" data-formset-add data-prefix="{{ formset.prefix }}">{% icon "plus" 18 %}<span>{% t "add_row" %}</span></button>
+    <dl class="totals">
+      <div><dt>{% t "subtotal" %}</dt><dd><span class="num" data-subtotal>0</span></dd></div>
+      <div><dt>{% t "tax" %}</dt><dd><span class="num" data-tax>0</span></dd></div>
+      <div class="is-good"><dt>{% t "total" %}</dt><dd><span class="num" data-total>0</span></dd></div>
+    </dl>
+    {% if kind != "sales" %}<p class="muted small">{% t "bill_line_help" %}</p>{% endif %}
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn-ghost" name="and_post" value="">{% t "save_draft" %}</button>
+    {% if can_post %}<button class="btn btn-primary" name="and_post" value="1">{% t "save_and_post" %}</button>{% endif %}
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% include "ledger/_party_datalist.html" %}
+{{ taxes|json_script:"tax-rates" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/finance.js' %}?v=1"></script><script src="{% static 'js/ledger.js' %}?v=1"></script>{% endblock %}

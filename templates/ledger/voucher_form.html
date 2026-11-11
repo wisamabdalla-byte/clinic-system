@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="{{ back_url }}">{% if dir == "rtl" %}→{% else %}←{% endif %} {% t "back" %}</a>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% if kind == "receipt" %}{% t "receipt_sub" %}{% else %}{% t "payment_sub" %}{% endif %}</p>
+  </div>
+</div>
+
+<form method="post" class="card form-card" novalidate data-voucher-form>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <section class="form-section">
+    <h2>{% t "voucher_money" %}</h2>
+    <div class="form-grid">
+      {% with field=form.date %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.treasury %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.amount %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.rate %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.reference %}{% include "crud/_field.html" %}{% endwith %}
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>{% if kind == "receipt" %}{% t "received_from" %}{% else %}{% t "paid_to" %}{% endif %}</h2>
+    <p class="muted">{% t "voucher_target_help" %}</p>
+    <div class="form-grid">
+      <div class="field{% if form.party.errors %} has-error{% endif %}">
+        <label for="{{ form.party.id_for_label }}">{% t "party" %} <span class="opt">({% t "optional" %})</span></label>
+        <div class="gap">{{ form.party }}<button class="btn btn-ghost btn-sm" name="refresh" value="1" formnovalidate>{% t "show_open_bills" %}</button></div>
+        <small class="help">{{ form.party.help_text }}</small>
+        {% for e in form.party.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </div>
+      {% with field=form.account %}{% include "crud/_field.html" %}{% endwith %}
+      {% if form.category %}{% with field=form.category %}{% include "crud/_field.html" %}{% endwith %}{% endif %}
+      {% with field=form.project %}{% include "crud/_field.html" %}{% endwith %}
+      {% with field=form.payee %}{% include "crud/_field.html" %}{% endwith %}
+      <div style="grid-column: 1 / -1">{% with field=form.description %}{% include "crud/_field.html" %}{% endwith %}</div>
+    </div>
+  </section>
+
+  {{ allocs.management_form }}
+  {% if alloc_rows %}
+  <section class="form-section">
+    <h2>{% t "allocate_to_bills" %}</h2>
+    <p class="muted">{% t "allocate_help" %}</p>
+    <div class="table-wrap"><table class="table table-form">
+      <thead><tr><th>{% t "number" %}</th><th>{% t "date" %}</th><th>{% t "due_date" %}</th><th>{% t "total" %}</th><th>{% t "balance" %}</th><th>{% t "amount" %}</th></tr></thead>
+      <tbody>
+        {% for b, f in alloc_rows %}
+        <tr>
+          <td><a href="{% url 'bill_detail' b.pk %}" target="_blank"><code>{{ b.number }}</code></a>{{ f.bill }}</td>
+          <td class="num">{{ b.date|date:"Y-m-d" }}</td>
+          <td class="num">{{ b.due_date|date:"Y-m-d"|default:"—" }}</td>
+          <td class="num">{{ b.total|money }}{% if b.currency and not b.currency.is_base %} {{ b.currency.code }}{% endif %}</td>
+          <td class="num">{{ b.balance|money }}</td>
+          <td class="w-amt"><div class="gap">{{ f.amount }}<button type="button" class="btn btn-ghost btn-sm" data-fill="{{ f.amount.html_name }}" data-balance="{{ b.balance }}">{% t "fill" %}</button></div>{% for e in f.amount.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <dl class="totals">
+      <div><dt>{% t "allocated" %}</dt><dd><span class="num" data-allocated>0</span></dd></div>
+      <div><dt>{% t "unallocated" %}</dt><dd><span class="num" data-unallocated>0</span></dd></div>
+    </dl>
+    <p class="muted small">{% t "unallocated_help" %}</p>
+  </section>
+  {% endif %}
+
+  <div class="form-actions">
+    <button class="btn btn-ghost" name="and_post" value="">{% t "save_draft" %}</button>
+    {% if can_post %}<button class="btn btn-primary" name="and_post" value="1">{% t "save_and_post" %}</button>{% endif %}
+    <a class="btn btn-ghost" href="{{ back_url }}">{% t "cancel" %}</a>
+  </div>
+</form>
+{% include "ledger/_party_datalist.html" %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/ledger.js' %}?v=1"></script>{% endblock %}

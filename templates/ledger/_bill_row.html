@@ -1,0 +1,11 @@
+{% load ui %}<tr class="formset-row">
+  <td data-label="{% t 'description' %}">{% for h in f.hidden_fields %}{{ h }}{% endfor %}{{ f.description }}{% for e in f.description.errors %}<small class="error">{{ e }}</small>{% endfor %}{% for e in f.non_field_errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  {% if f.category %}<td data-label="{% t 'expense_category' %}" class="w-proj">{{ f.category }}</td>{% endif %}
+  <td data-label="{% t 'account' %}" class="w-acc">{{ f.account }}{% for e in f.account.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'project' %}" class="w-proj">{{ f.project }}</td>
+  <td data-label="{% t 'quantity' %}" class="w-qty">{{ f.quantity }}{% for e in f.quantity.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'price' %}" class="w-amt">{{ f.unit_price }}{% for e in f.unit_price.errors %}<small class="error">{{ e }}</small>{% endfor %}</td>
+  <td data-label="{% t 'tax' %}" class="w-proj">{{ f.tax }}</td>
+  <td data-label="{% t 'line_total' %}" class="cell-money"><span class="num" data-line-total>—</span></td>
+  <td>{% if f.instance.pk %}<label class="check-label remove-row">{{ f.DELETE }}<span>{% t "remove" %}</span></label>{% else %}<button type="button" class="btn btn-ghost btn-sm" data-remove-row aria-label="{% t 'remove' %}">{% icon "x" 16 %}</button>{% endif %}</td>
+</tr>

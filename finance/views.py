@@ -24,7 +24,7 @@ from .forms import (
     CloseMonthForm, ExpenseForm, FirstPaymentForm, InvoiceForm, ItemFormSet, PaymentForm, PayoutForm,
 )
 from .models import (
-    ZERO, DoctorPayout, DoctorSettlement, Expense, ExpenseCategory, Invoice, Payment, money,
+    ZERO, DoctorPayout, DoctorSettlement, Expense, Invoice, Payment, expense_category_labels, money,
     month_start, next_month,
 )
 from .services import close_month, doctor_balance, month_figures, reopen_month
@@ -544,11 +544,10 @@ class ExpenseList(CrudListView):
     has_status = False
     create_url, edit_url = "expense_create", "expense_edit"
     search_fields = ["description", "reference"]
-    filters = [("category", "category", ExpenseCategory.choices)]
     columns = [
         Col("date", lambda o: o.date, "date"),
         Col("description", lambda o: o.description, "title", sub=lambda o: o.reference),
-        Col("expense_category", lambda o: o.get_category_display(), "badge"),
+        Col("expense_category", lambda o: o.category_label, "badge"),
         Col("amount", lambda o: o.amount, "money"),
         Col("payment_method", lambda o: o.method.name),
         Col("created_by", lambda o: str(o.created_by or "—"), "muted"),
@@ -556,6 +555,7 @@ class ExpenseList(CrudListView):
 
     def get_queryset(self):
         self.queryset = Expense.objects.filter(branch=self.request.branch).select_related("method", "created_by")
+        self.filters = [("category", "category", list(expense_category_labels().items()))]
         return super().get_queryset()
 
 
@@ -665,8 +665,8 @@ class MonthlyReport(PermissionMixin, TemplateView):
             outstanding=Invoice.objects.filter(is_cancelled=False, **({} if scope == "all" else {"branch": branch}))
             .aggregate(s=Sum("total"), p=Sum("paid")),
             doctors=list(doctors.values()),
-            categories=[{"label": c.label, "amount": by_cat.get(c.value, ZERO)} for c in ExpenseCategory
-                        if by_cat.get(c.value)],
+            categories=[{"label": expense_category_labels().get(code, code), "amount": amount}
+                        for code, amount in sorted(by_cat.items()) if amount],
             methods=[{"method": methods[k], "amount": v} for k, v in by_method(pay).items()],
         )
         o = ctx["outstanding"]

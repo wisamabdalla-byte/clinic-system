@@ -184,10 +184,18 @@ class ExpenseForm(StyledModelForm):
         widgets = {"date": DateInput(), "amount": forms.NumberInput(attrs={"step": "0.01", "min": "0.01"})}
 
     def __init__(self, *args, **kwargs):
+        from ledger.models import ExpenseCategory as LedgerCategory
+
         super().__init__(*args, **kwargs)
         self.fields["method"].queryset = active_methods()
         self.fields["method"].empty_label = None
         self.fields["reference"].widget.attrs["dir"] = "ltr"
+        current = self.instance.category if self.instance.pk else None
+        cats = LedgerCategory.objects.filter(is_active=True) | LedgerCategory.objects.filter(code=current or "")
+        field = self.fields["category"]
+        self.fields["category"] = forms.ChoiceField(
+            label=field.label, choices=[("", "—")] + [(c.code, c.name) for c in cats.distinct()],
+            widget=forms.Select(attrs={"class": "input select"}))
 
 
 class CloseMonthForm(StyledFormMixin, forms.Form):

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{% t "treasury_sub" %}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{% url 'transfer_list' %}">{% icon "repeat" 18 %}<span>{% t "nav_transfers" %}</span></a>
+    {% if can_edit %}<a class="btn btn-ghost" href="{% url 'transfer_create' %}">{% icon "plus" 18 %}<span>{% t "new_transfer" %}</span></a>
+    <a class="btn btn-primary" href="{% url 'treasury_create' %}">{% icon "plus" 18 %}<span>{% t "add" %}</span></a>{% endif %}
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card stat"><span class="stat-icon stat-icon-good">{% icon "wallet" 20 %}</span><span class="stat-value"><span class="num">{{ total|money }}</span> <small class="cur">{{ currency }}</small></span><span class="stat-label">{% t "cash_and_banks" %}</span></div>
+</div>
+
+<section class="card">
+  <div class="rtable-wrap"><table class="rtable">
+    <thead><tr><th>{% t "name" %}</th><th>{% t "type" %}</th><th>{% t "ledger_account" %}</th><th>{% t "bank_details" %}</th><th class="k-money">{% t "balance_fc" %}</th><th class="k-money">{% t "balance" %} ({{ currency }})</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr{% if not r.t.is_active %} class="r-muted"{% endif %}>
+        <td><strong>{{ r.t.name }}</strong>{% if r.t.branch %}<br><small class="muted">{{ r.t.branch.name }}</small>{% endif %}</td>
+        <td><span class="badge">{{ r.t.get_kind_display }}</span></td>
+        <td><a class="rlink" href="{% url 'ledger_report' 'general_ledger' %}?account={{ r.t.account_id }}"><code>{{ r.t.account.code }}</code> {{ r.t.account.name }}</a></td>
+        <td class="small">{{ r.t.bank_name }}{% if r.t.account_number %} · <span class="num">{{ r.t.account_number }}</span>{% endif %}{% if r.t.iban %}<br><span class="num muted">{{ r.t.iban }}</span>{% endif %}</td>
+        <td class="k-money">{% if r.fx is not None %}{{ r.fx|money }} {{ r.t.account.currency.code }}{% endif %}</td>
+        <td class="k-money{% if r.balance < 0 %} num-neg{% endif %}"><strong>{{ r.balance|money }}</strong>{% if r.unposted %}<br><small class="muted">{% t "unposted_lines" r.unposted %}</small>{% endif %}</td>
+        <td class="nowrap">
+          {% if can_edit %}<a class="btn btn-ghost btn-sm" href="{% url 'treasury_edit' r.t.pk %}" aria-label="{% t 'edit' %}">{% icon "edit" 14 %}</a>{% endif %}
+          {% if can_reconcile and r.t.kind == "bank" %}<a class="btn btn-ghost btn-sm" href="{% url 'reconcile_create' %}?treasury={{ r.t.pk }}">{% icon "check" 14 %}<span>{% t "nav_reconcile" %}</span></a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "recent_transfers" %}</h2>
+    {% if transfers %}<div class="rtable-wrap"><table class="rtable"><tbody>
+      {% for t in transfers %}<tr><td class="num nowrap">{{ t.date|date:"Y-m-d" }}</td><td><a href="{% url 'transfer_detail' t.pk %}"><code>{{ t.number }}</code></a> {{ t.source.name }} → {{ t.target.name }}</td><td class="k-money">{{ t.amount|money }}</td><td>{% if t.status != "posted" %}<span class="badge badge-bad">{{ t.get_status_display }}</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+  <section class="card">
+    <h2 class="pad pad-b0">{% t "reconciliations" %}</h2>
+    {% if reconciliations %}<div class="rtable-wrap"><table class="rtable"><tbody>
+      {% for r in reconciliations %}<tr><td class="num nowrap">{{ r.statement_date|date:"Y-m-d" }}</td><td><a href="{% url 'reconcile_detail' r.pk %}">{{ r.treasury.name }}</a></td><td class="k-money">{{ r.statement_balance|money }}</td><td><span class="badge {% if r.is_done %}badge-good{% else %}badge-muted{% endif %}">{% if r.is_done %}{% t "done" %}{% else %}{% t "in_progress" %}{% endif %}</span></td></tr>{% endfor %}
+    </tbody></table></div>{% else %}<div class="empty empty-sm"><span class="muted">—</span></div>{% endif %}
+  </section>
+</div>
+{% endblock %}
